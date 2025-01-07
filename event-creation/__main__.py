@@ -1569,16 +1569,6 @@ def on_listbox_select(event):
 created_events_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
 
-def copy_to_clipboard(event):
-    # Get the index of the selected item
-    selection_index = created_events_listbox.curselection()
-    if selection_index:
-        selected_text = created_events_listbox.get(selection_index[0])
-        window.clipboard_clear()
-        window.clipboard_append(selected_text)
-        
-
-
 workunit_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
 for name in workunit_paths:
