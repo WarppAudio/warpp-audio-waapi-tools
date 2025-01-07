@@ -1,0 +1,17 @@
+{
+    "commands":[
+        {
+            "id":"warpp.event-creation",
+            "displayName":"Event Creation",
+            "defaultShortcut":"",
+            "program":"pyw.exe",
+            "startMode":"MultipleSelectionSingleProcessSpaceSeparated",
+            "args":"-3 ${CurrentCommandDirectory}\\..\\event-creation ${id}",
+            "cwd":"",
+            "contextMenu":{
+                    "basePath":"WAAPI Tools"
+                },
+            "redirectOutputs":false
+        }        
+    ]
+}

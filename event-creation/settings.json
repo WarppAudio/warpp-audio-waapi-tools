@@ -1,0 +1,22 @@
+{
+    "NAMING_CONVENTION": [],
+    "WORDS_REMOVE": [],
+    "NAMING_FOR_LOOPS": "lp",
+    "SOUND_NAMING_FOR_LOOPS": [
+        "_lp",
+        "_loop",
+        "_Loop"
+    ],
+    "WORDS_NOT_CAPITALIZE": [],
+    "PLAY_NAMING_CONVENTION": "Play_",
+    "STOP_NAMING_CONVENTION": "Stop_",
+    "STOP_EVENT_FOR_LOOPS": true,
+    "LETTER_CASE_EVENT_NAME": "lower",
+    "PLAY_LOOP_FADE_TIME": 1.0,
+    "STOP_LOOP_FADE_TIME": 1.0,
+    "SEEK_ACTION_FOR_LOOPS": true,
+    "SEEK_Percent": 50.0,
+    "SEEK_RANDOM_MIN": -45.0,
+    "SEEK_RANDOM_MAX": 45.0,
+    "UPPER_CASE_EVENTS_NAME": false
+}
