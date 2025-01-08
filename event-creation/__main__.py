@@ -892,10 +892,12 @@ def update_workunit_listbox():
         workunit_listbox.insert(tk.END, name)
 
 
-refresh_wwu_image = Image.open(Path(__file__).parent / "icons/refresh_icon.png")
-resised = refresh_wwu_image.resize((35, 35))
-refresh_wwu_icon = ImageTk.PhotoImage(resised)
-refresh_wwu_icon_label = tk.Label(window, image=refresh_wwu_icon, bg="#212120", cursor="hand2")
+refresh_wwu_icon = ctk.CTkImage(
+    light_image=Image.open(Path(__file__).parent / "icons" / "refresh_icon.png"),
+    size=(35, 35)
+)
+
+refresh_wwu_icon_label = ctk.CTkLabel(window, image=refresh_wwu_icon, text="", cursor="hand2")
 refresh_wwu_icon_label.image = refresh_wwu_icon
 refresh_wwu_icon_label.lift()
 refresh_wwu_icon_label.place(x=12, y=30)
@@ -1261,13 +1263,8 @@ create_options_frame.configure(fg_color="#212120")
 create_options_frame.grid(row=2, column=0, sticky='nw', padx=10, pady=10)
 
 # Load and resize images
-folder_image = Image.open(Path(__file__).parent /"icons"/"foldericon.png")
-folder_image_resized = folder_image.resize((20, 20))
-folder_icon = ImageTk.PhotoImage(folder_image_resized)
-
-wwu_image = Image.open(Path(__file__).parent/ "icons"/"workuniticon.png")
-wwu_image_resized = wwu_image.resize((20, 20))
-wwu_icon = ImageTk.PhotoImage(wwu_image_resized)
+folder_icon = ctk.CTkImage(light_image=Image.open(Path(__file__).parent /"icons"/"foldericon.png"), size=(20, 20))
+wwu_icon = ctk.CTkImage(light_image=Image.open(Path(__file__).parent /"icons"/"workuniticon.png"), size=(20, 20))
 
 # Keep references
 window.folder_icon = folder_icon
@@ -1364,9 +1361,7 @@ label_combo.grid(row=0, column=0, columnspan=3, sticky='w', padx=15, pady=15)
 show_new_wwu_checkbox.grid(row=2, column=0, pady=5, sticky='w')
 show_new_folder_checkbox.grid(row=3, column=0, pady=5, sticky='w')
 
-create_events_image = Image.open(Path(__file__).parent / "icons"/"wwise_logo.png")
-create_events_image_resized = create_events_image.resize((60, 45))
-create_events_icon = ImageTk.PhotoImage(create_events_image_resized)
+create_events_icon = ctk.CTkImage(light_image=Image.open(Path(__file__).parent /"icons"/"wwise_logo.png"), size=(60, 45))
 window.create_events_icon = create_events_icon
 
 launch_button = ctk.CTkButton(
@@ -1464,13 +1459,19 @@ def clear_created_events_listbox(event=None):
 trash_image = Image.open(Path(__file__).parent/ "icons"/"trash_icon.png")
 trash_image_resized = trash_image.resize((20, 20))
 trash_icon = ImageTk.PhotoImage(trash_image_resized)
-window.trash_icon = trash_icon  # to keep the reference
 
-trash_label = tk.Label(
+trash_icon = ctk.CTkImage(
+    light_image=Image.open(Path(__file__).parent / "icons" / "trash_icon.png"),
+    size=(20, 20)
+)
+window.trash_icon = trash_icon 
+
+trash_label = ctk.CTkLabel(
     listbox_evets_frame,
     image=trash_icon,
-    bg="#212120",
-    cursor="hand2"  # changes cursor to 'hand' on hover
+    text="",          
+    fg_color="#212120", 
+    cursor="hand2"
 )
 trash_label.grid(row=0, column=1, sticky='e', padx=(0, 5))
 
@@ -1567,6 +1568,16 @@ def on_listbox_select(event):
 
 # Bind the selection event of the listbox to on_listbox_select
 created_events_listbox.bind('<<ListboxSelect>>', on_listbox_select)
+
+
+def copy_to_clipboard(event):
+    # Get the index of the selected item
+    selection_index = created_events_listbox.curselection()
+    if selection_index:
+        selected_text = created_events_listbox.get(selection_index[0])
+        window.clipboard_clear()
+        window.clipboard_append(selected_text)
+        
 
 
 workunit_listbox.bind('<<ListboxSelect>>', on_listbox_select)
