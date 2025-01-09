@@ -27,7 +27,7 @@ settings_valid = True
 
 class SettingsManager:
     def __init__(self):
-        # Nowa funkcja pomocnicza do określania ścieżki na podstawie uruchamianego pliku
+        
         def get_resource_path(filename):
             base_path = os.path.dirname(os.path.realpath(sys.argv[0]))
             return os.path.join(base_path, filename)
@@ -56,7 +56,7 @@ class SettingsManager:
 
     def load(self):
         try:
-            # Jeśli plik nie istnieje, stwórz go z domyślnymi ustawieniami
+          
             if not os.path.exists(self.path):
                 print("Creating new settings file")
                 self.save()
@@ -64,7 +64,7 @@ class SettingsManager:
 
             with open(self.path, 'r') as file:
                 loaded_settings = json.load(file)
-                # Aktualizuj tylko istniejące klucze
+                
                 for key in self.settings.keys():
                     if key in loaded_settings:
                         self.settings[key] = loaded_settings[key]
@@ -82,7 +82,7 @@ class SettingsManager:
 
     def save(self):
         try:
-            # Upewnij się, że katalog istnieje
+    
             os.makedirs(os.path.dirname(self.path), exist_ok=True)
             
             with open(self.path, 'w') as file:
