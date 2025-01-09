@@ -35,7 +35,7 @@ This repository contains two main folders:
 ## 📚 Documentation
 
 Detailed setup instructions are available in each folder's README:
-- [Executables Setup Guide](./Executables/README.md)
+- [Executables Setup Guide](./Executables-WIP/README.md)
 - [Source Code Setup Guide](./Source/README.md)
 
 ## ✨ Features
