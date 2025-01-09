@@ -1635,5 +1635,7 @@ window.iconbitmap(str(icon_path))
 window.grid_columnconfigure(0, weight=4)
 window.grid_columnconfigure(1, weight=1)
 
-window.mainloop()
-
+def main():
+    window.mainloop()
+if __name__ == "__main__":
+    main()
