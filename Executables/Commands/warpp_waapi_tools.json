@@ -6,7 +6,7 @@
             "defaultShortcut":"",
             "program":"${CurrentCommandDirectory}\\..\\event-creation\\event_creation.exe",
             "startMode":"MultipleSelectionSingleProcessSpaceSeparated",
-            "args":"-3 ${CurrentCommandDirectory}\\..\\event-creation ${id}",
+            "args":"-3 ${CurrentCommandDirectory}\\..\\event_creation ${id}",
             "cwd":"",
             "contextMenu":{
                     "basePath":"WAAPI Tools"
