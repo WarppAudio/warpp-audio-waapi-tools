@@ -1,4 +1,4 @@
-🎵 Wwise Python Tools - Simple EXE Setup
+🎵 Wwise Python Tools - Simple EXE Setup (WIP)
 Welcome to the warpp-audio-waapi-tools repository! This project provides an executable version of Python-based tools that leverage the Wwise Authoring API (WAAPI) to streamline and automate tasks within Audiokinetic Wwise.
 🚀 Getting Started
 These instructions will guide you through a simplified setup using the executable version of our tools.
