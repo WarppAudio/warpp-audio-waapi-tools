@@ -19,9 +19,20 @@ settings_valid = True
 
 
 # Load settings
+import os
+import sys
+import json
+from pathlib import Path
+from tkinter import messagebox
+
 class SettingsManager:
     def __init__(self):
-        self.path = Path(__file__).parent / 'settings.json'
+        # Nowa funkcja pomocnicza do określania ścieżki na podstawie uruchamianego pliku
+        def get_resource_path(filename):
+            base_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+            return os.path.join(base_path, filename)
+
+        self.path = get_resource_path('settings.json')
         self.settings = {
             'NAMING_CONVENTION': [],
             'WORDS_REMOVE': [],
@@ -42,25 +53,43 @@ class SettingsManager:
         print(f"Loading settings from: {self.path}")
         self.load()
 
+
     def load(self):
         try:
+            # Jeśli plik nie istnieje, stwórz go z domyślnymi ustawieniami
+            if not os.path.exists(self.path):
+                print("Creating new settings file")
+                self.save()
+                return
+
             with open(self.path, 'r') as file:
-                print("LOADED")
-                self.settings.update(json.load(file))
+                loaded_settings = json.load(file)
+                # Aktualizuj tylko istniejące klucze
+                for key in self.settings.keys():
+                    if key in loaded_settings:
+                        self.settings[key] = loaded_settings[key]
+                print("Settings loaded successfully")
+                
         except FileNotFoundError:
             print("JSON NOT FOUND")
-            messagebox.showerror("JSON Not Found", "Make sure JSON file is in the same location as .py file")
+            messagebox.showerror("JSON Not Found", f"Settings file not found at: {self.path}")
         except json.JSONDecodeError:
             print("JSON FORMAT ERROR")
-            messagebox.showerror("JSON Format Error", "The JSON file is corrupted or has incorrect format.")
+            messagebox.showerror("JSON Format Error", "The settings file is corrupted or has incorrect format.")
+        except Exception as e:
+            print(f"Unexpected error loading settings: {e}")
+            messagebox.showerror("Load Error", f"An unexpected error occurred while loading settings: {e}")
 
     def save(self):
         try:
+            # Upewnij się, że katalog istnieje
+            os.makedirs(os.path.dirname(self.path), exist_ok=True)
+            
             with open(self.path, 'w') as file:
                 json.dump(self.settings, file, indent=4)
-                print("JSON SAVED")
+                print("Settings saved successfully")
         except Exception as e:
-            print(f"Error saving JSON: {e}")
+            print(f"Error saving settings: {e}")
             messagebox.showerror("Save Error", f"An error occurred while saving settings: {e}")
 
     def get(self, key, default=None):
@@ -1600,11 +1629,11 @@ project_label = ctk.CTkLabel(
     anchor="e"
 )
 project_label.grid(row=3, column=2, padx=15, sticky='es')
+icon_path = Path(__file__).parent / "icons" / "warpp_logo_white.ico"
+window.iconbitmap(str(icon_path))
 
 window.grid_columnconfigure(0, weight=4)
 window.grid_columnconfigure(1, weight=1)
 
-def main():
-    window.mainloop()
-if __name__ == "__main__":
-    main()
+window.mainloop()
+
