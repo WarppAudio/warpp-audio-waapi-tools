@@ -7,6 +7,12 @@ from tkinter import messagebox
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from waapi import WaapiClient
+import os
+import sys
+import json
+from pathlib import Path
+from tkinter import messagebox
+
 
 
 created_events = []
@@ -18,12 +24,6 @@ settings_valid = True
 
 
 
-# Load settings
-import os
-import sys
-import json
-from pathlib import Path
-from tkinter import messagebox
 
 class SettingsManager:
     def __init__(self):
