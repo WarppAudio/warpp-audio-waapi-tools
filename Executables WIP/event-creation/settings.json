@@ -3,9 +3,10 @@
     "WORDS_REMOVE": [],
     "NAMING_FOR_LOOPS": "_loop",
     "SOUND_NAMING_FOR_LOOPS": [
+        "_LP",
         "_lp",
-        "_loop",
-        "_Loop"
+        "_Loop",
+        "_loop"
     ],
     "WORDS_NOT_CAPITALIZE": [],
     "PLAY_NAMING_CONVENTION": "Play_",
