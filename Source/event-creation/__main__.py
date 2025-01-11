@@ -112,7 +112,7 @@ def format_event_name(name, prefix, settings_manager):
      - Skips capitalization or lowercasing for certain words:
        + Direct match in the 'words_not_capital' list
        + Matches any regex pattern created from 'words_not_capital' items containing '#'
-         (for example, "PU#" -> regex ^PU\d+$)
+         (for example, "SFX#" -> regex ^SFX\d+$)
      - Applies uppercase or lowercase if specified in settings
      - Finally, adds a prefix and returns the resulting string
     """
@@ -132,7 +132,7 @@ def format_event_name(name, prefix, settings_manager):
         item_strip = item.strip()
         if '#' in item_strip:
             # Replace '#' with \d+ to match any sequence of digits
-            # For example: "PU#" -> '^PU\d+$'
+            # For example: "SFX#" -> '^SFX\d+$'
             pattern = '^' + item_strip.replace('#', r'\d+') + '$'
             try:
                 # Compile the regex pattern
