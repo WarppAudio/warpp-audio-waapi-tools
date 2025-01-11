@@ -1,5 +1,7 @@
-import json
+import os
+import sys
 import re
+import json
 import traceback
 from pathlib import Path
 import tkinter as tk
@@ -7,11 +9,7 @@ from tkinter import messagebox
 import customtkinter as ctk
 from PIL import Image, ImageTk
 from waapi import WaapiClient
-import os
-import sys
-import json
-from pathlib import Path
-from tkinter import messagebox
+
 
 
 
