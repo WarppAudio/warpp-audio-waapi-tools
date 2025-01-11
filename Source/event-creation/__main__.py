@@ -104,40 +104,92 @@ settings_manager = SettingsManager()
 
 
 def format_event_name(name, prefix, settings_manager):
+    """
+    Formats the event name according to various settings:
+     - Replaces spaces and dashes with underscores
+     - Removes extra underscores
+     - Splits the name into words separated by underscores
+     - Skips capitalization or lowercasing for certain words:
+       + Direct match in the 'words_not_capital' list
+       + Matches any regex pattern created from 'words_not_capital' items containing '#'
+         (for example, "PU#" -> regex ^PU\d+$)
+     - Applies uppercase or lowercase if specified in settings
+     - Finally, adds a prefix and returns the resulting string
+    """
+
+    # Retrieve settings
     words_not_capital = settings_manager.get('WORDS_NOT_CAPITALIZE', [])
     letter_case_event_name = settings_manager.get('LETTER_CASE_EVENT_NAME', None)
     loop_naming = settings_manager.get('NAMING_FOR_LOOPS', '')
-    
-    # Replace spaces and dashes with underscores and remove extra underscores
+
+    # Prepare two lists:
+    # 1) direct_words: items from 'words_not_capital' that do not contain '#'
+    # 2) regex_words: items that do contain '#'; we convert them into regex patterns
+    direct_words = []
+    regex_words = []
+
+    for item in words_not_capital:
+        item_strip = item.strip()
+        if '#' in item_strip:
+            # Replace '#' with \d+ to match any sequence of digits
+            # For example: "PU#" -> '^PU\d+$'
+            pattern = '^' + item_strip.replace('#', r'\d+') + '$'
+            try:
+                # Compile the regex pattern
+                compiled = re.compile(pattern)
+                regex_words.append(compiled)
+            except Exception:
+                # If the pattern is invalid, skip it or log an error
+                continue
+        else:
+            direct_words.append(item_strip)
+
+    # Replace spaces and dashes with underscores and remove consecutive underscores
     name = name.replace(' ', '_').replace('-', '_')
     name = re.sub(r'__+', '_', name)
 
-    # Split the name into words using underscores
+    # Split the name on underscores
     words = name.strip('_').split('_')
-
-    words_not_capital_set = {word.strip() for word in words_not_capital if word.strip()}
 
     formatted_words = []
     for word in words:
         word_stripped = word.strip()
-        if word_stripped in words_not_capital_set or word_stripped in loop_naming:
-            # Leave the word exactly as it appears in the input name
+
+        # Determine if this word should skip any capitalization/lowercase modifications
+        skip_capitalization = False
+
+        # Condition 1: The word is in direct_words
+        # Condition 2: The word matches loop_naming (existing logic)
+        if word_stripped in direct_words or word_stripped in loop_naming:
+            skip_capitalization = True
+        else:
+            # Check each compiled regex from regex_words
+            for rgx in regex_words:
+                if rgx.match(word_stripped):
+                    skip_capitalization = True
+                    break
+
+        # If skip_capitalization is True, we keep the word exactly as is
+        if skip_capitalization:
             formatted_words.append(word_stripped)
         else:
+            # Otherwise, apply uppercase or lowercase rules if configured
             if letter_case_event_name == 'upper':
                 formatted_words.append(word_stripped.capitalize())
             elif letter_case_event_name == 'lower':
                 formatted_words.append(word_stripped.lower())
             else:
+                # If None, leave the word as-is
                 formatted_words.append(word_stripped)
 
-    # Rejoin the words with underscores
+    # Rebuild the name with underscores
     formatted_name = '_'.join(formatted_words)
 
     # Prefix the name and remove any trailing underscores
     formatted_name = f"{prefix}{formatted_name}".strip('_')
 
     return formatted_name
+
 
 
 
