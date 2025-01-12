@@ -1691,18 +1691,9 @@ def copy_to_clipboard(event):
 
 workunit_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
-
-project_name = "Not Connected"
-try:
-    #global client
-    info = client.call("ak.wwise.core.getProjectInfo")
-    project_name = info.get("name", "Not Connected")
-except Exception:
-    pass
-
 project_label = ctk.CTkLabel(
     main_frame,
-    text=f"{project_name}",
+    text=f"Not Connected",
     text_color="#9f9f9f",
     anchor="e"
 )
@@ -1726,6 +1717,14 @@ def main():
     workunit_names = get_workunit_names()
     workunit_paths = get_workunit_path()
     folder_names = get_folder_names()
+    
+    project_name = "Not Connected"
+    try:
+        info = client.call("ak.wwise.core.getProjectInfo")
+        project_name = info.get("name", "Not Connected")
+    except Exception:
+        pass
+    project_label.configure(text=project_name)
     
     for name in workunit_paths:
         workunit_listbox.insert(tk.END, name)
