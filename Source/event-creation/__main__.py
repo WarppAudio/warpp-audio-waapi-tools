@@ -214,6 +214,27 @@ def event_exists(event_name, client):
     found_objects = result.get("return", [])
     return len(found_objects) > 0
 
+def check_if_is_loop_sound(sound_name: str, tokens: list[str]) -> bool:
+    """
+    Checks if 'sound_name' contains any of the given 'tokens' in a case-sensitive manner.
+    A token must be preceded by start-of-string, underscore, or dash,
+    and followed by underscore, dash, or end-of-string.
+    Example: for token = "loop", we only match:
+    _loop, loop_, _loop_, ^loop, loop$ or dash-based variants: -loop, loop-, etc.
+    """
+    for token in tokens:
+        # Escape user-defined token in case it contains special regex characters
+        token_escaped = re.escape(token.strip())
+
+        # Build the pattern allowing ^ (start), _ (underscore), or - (dash) on the left,
+        # and _ (underscore), - (dash), or $ (end) on the right.
+        # We do NOT use re.IGNORECASE, so it is case sensitive.
+        pattern = re.compile(r'(?:^|_|-)' + token_escaped + r'(?:_|-|$)')
+
+        # If the pattern matches anywhere in the sound_name, return True immediately
+        if pattern.search(sound_name):
+            return True
+    return False
 
 def create_event_play(name, target, client, is_loop=False):
     play_naming = settings_manager.get("PLAY_NAMING_CONVENTION", "")
@@ -358,6 +379,7 @@ def create_play_or_seek_event(path_obj, target_id, is_loop, client):
 
 
 
+
 def create_events_for_selection(wwu_path, new_wwu):
     """
     Creates events (Play/Seek + optional Stop) based on the current Wwise selection.
@@ -412,11 +434,12 @@ def create_events_for_selection(wwu_path, new_wwu):
                 cleaned_name = cleaned_name.replace(w, "")
             cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
 
-            # Check if the name indicates a loop
+            # Check if the name indicates a loop 
             # (we look for items in loop_sound_naming)
-            is_loop = any(item in cleaned_name for item in loop_sound_naming)
+            is_loop = check_if_is_loop_sound(cleaned_name, loop_sound_naming)
+
             if is_loop:
-                # Remove loop_sound_naming tokens
+                # remove tokens from the name
                 for token in loop_sound_naming:
                     cleaned_name = cleaned_name.replace(token, "")
                 cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
