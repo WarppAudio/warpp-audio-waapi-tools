@@ -331,7 +331,7 @@ def create_event_seek(name, target, client):
 
 
 def create_new_workunit(parent_path, new_workunit_name):
-    create_new_workunit
+    global client
     create_args = {
         "parent": parent_path,
         "type": "WorkUnit",
@@ -385,8 +385,9 @@ def create_events_for_selection(wwu_path, new_wwu):
     Creates events (Play/Seek + optional Stop) based on the current Wwise selection.
     Places them inside the specified wwu_path + new_wwu, ignoring the original path location.
     """
+    global client
     try:
-        create_new_workunit
+        
             # Retrieve currently selected Wwise objects
         options = {
             "return": [
@@ -1712,10 +1713,15 @@ window.iconbitmap(str(icon_path))
 window.grid_columnconfigure(0, weight=4)
 window.grid_columnconfigure(1, weight=1)
 
+def on_close():
+    close_waapi_connection()  
+    window.destroy()        
+
 def main():
     global client
     client = open_waapi_connection()
 
+    
     global workunit_names, workunit_paths, folder_names
     workunit_names = get_workunit_names()
     workunit_paths = get_workunit_path()
@@ -1723,6 +1729,8 @@ def main():
     
     for name in workunit_paths:
         workunit_listbox.insert(tk.END, name)
+
+    window.protocol("WM_DELETE_WINDOW", on_close)
 
     try:
     # Run gui
