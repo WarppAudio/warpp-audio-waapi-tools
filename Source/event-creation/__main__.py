@@ -12,16 +12,25 @@ from waapi import WaapiClient
 
 
 
+client = None
+
+def open_waapi_connection():
+    global client
+    if client is None:
+        client = WaapiClient()
+    return client
+
+def close_waapi_connection():
+    global client
+    if client is not None and client.is_connected():
+        client.disconnect()
+        client = None
+
 
 created_events = []
 created_event_seek_names = []
-
 created_items_dict = {}
 settings_valid = True
-
-
-
-
 
 class SettingsManager:
     def __init__(self):
@@ -102,18 +111,18 @@ settings_manager = SettingsManager()
 
 
 def format_event_name(name, prefix, settings_manager):
-    """
-    Formats the event name according to various settings:
-     - Replaces spaces and dashes with underscores
-     - Removes extra underscores
-     - Splits the name into words separated by underscores
-     - Skips capitalization or lowercasing for certain words:
-       + Direct match in the 'words_not_capital' list
-       + Matches any regex pattern created from 'words_not_capital' items containing '#'
-         (for example, "SFX#" -> regex ^SFX\d+$)
-     - Applies uppercase or lowercase if specified in settings
-     - Finally, adds a prefix and returns the resulting string
-    """
+
+    # Formats the event name according to various settings:
+    #  - Replaces spaces and dashes with underscores
+    #  - Removes extra underscores
+    #  - Splits the name into words separated by underscores
+    #  - Skips capitalization or lowercasing for certain words:
+    #    + Direct match in the 'words_not_capital' list
+    #    + Matches any regex pattern created from 'words_not_capital' items containing '#'
+    #      (for example, "SFX#" -> regex ^SFX\d+$)
+    #  - Applies uppercase or lowercase if specified in settings
+    #  - Finally, adds a prefix and returns the resulting string
+
 
     # Retrieve settings
     words_not_capital = settings_manager.get('WORDS_NOT_CAPITALIZE', [])
@@ -301,41 +310,41 @@ def create_event_seek(name, target, client):
 
 
 def create_new_workunit(parent_path, new_workunit_name):
-    with WaapiClient() as client:
-        create_args = {
-            "parent": parent_path,
-            "type": "WorkUnit",
-            "name": new_workunit_name
-        }
-        response = client.call("ak.wwise.core.object.create", create_args)
-        created_id = response["id"]
+    create_new_workunit
+    create_args = {
+        "parent": parent_path,
+        "type": "WorkUnit",
+        "name": new_workunit_name
+    }
+    response = client.call("ak.wwise.core.object.create", create_args)
+    created_id = response["id"]
 
-        # Text to show in the created events listbox
-        fullpath = str(create_args["parent"])
-        parts = fullpath.strip("\\").split("\\")
-        last_part = parts[-1]
-        display_text = str(last_part + "\\" + create_args['name'] + " [W]")
+    # Text to show in the created events listbox
+    fullpath = str(create_args["parent"])
+    parts = fullpath.strip("\\").split("\\")
+    last_part = parts[-1]
+    display_text = str(last_part + "\\" + create_args['name'] + " [W]")
 
-        # Update created events in listbox, with ID
-        update_events_listbox(display_text, created_id)
+    # Update created events in listbox, with ID
+    update_events_listbox(display_text, created_id)
 
 
 def create_new_folder(parent_path, new_folder_name):
-    with WaapiClient() as client:
-        create_args = {
-            "parent": parent_path,
-            "type": "Folder",
-            "name": new_folder_name
-        }
-        response = client.call("ak.wwise.core.object.create", create_args)
-        created_id = response["id"]
+    global client
+    create_args = {
+        "parent": parent_path,
+        "type": "Folder",
+        "name": new_folder_name
+    }
+    response = client.call("ak.wwise.core.object.create", create_args)
+    created_id = response["id"]
 
-        fullpath = str(create_args["parent"])
-        parts = fullpath.strip("\\").split("\\")
-        last_part = parts[-1]
-        display_text = str(last_part + "\\" + create_args['name'] + " [F]")
+    fullpath = str(create_args["parent"])
+    parts = fullpath.strip("\\").split("\\")
+    last_part = parts[-1]
+    display_text = str(last_part + "\\" + create_args['name'] + " [F]")
 
-        update_events_listbox(display_text, created_id)
+    update_events_listbox(display_text, created_id)
 
 def create_play_or_seek_event(path_obj, target_id, is_loop, client):
     seek_event_for_loops = settings_manager.get('SEEK_ACTION_FOR_LOOPS', False)
@@ -355,145 +364,145 @@ def create_events_for_selection(wwu_path, new_wwu):
     Places them inside the specified wwu_path + new_wwu, ignoring the original path location.
     """
     try:
-        with WaapiClient() as client:
+        create_new_workunit
             # Retrieve currently selected Wwise objects
-            options = {
-                "return": [
-                    "path",
-                    "id",
-                    "isPlayable",
-                    "originalWavFilePath",
-                    "parent.id",
-                    "ChannelConfigOverride",
-                    "name",
-                ]
-            }
-            selected_objs = client.call(
-                "ak.wwise.ui.getSelectedObjects", {}, options=options
-            )["objects"]
+        options = {
+            "return": [
+                "path",
+                "id",
+                "isPlayable",
+                "originalWavFilePath",
+                "parent.id",
+                "ChannelConfigOverride",
+                "name",
+            ]
+        }
+        selected_objs = client.call(
+            "ak.wwise.ui.getSelectedObjects", {}, options=options
+        )["objects"]
 
-            # We'll collect event dictionaries in set_args["objects"]
-            set_args = {
-                "objects": [],
-                "onNameConflict": "merge",
-            }
+        # We'll collect event dictionaries in set_args["objects"]
+        set_args = {
+            "objects": [],
+            "onNameConflict": "merge",
+        }
 
-            newly_created_event_names = []
-            incorrect_sources = []
+        newly_created_event_names = []
+        incorrect_sources = []
 
-            # get actual info
-            words_remove = settings_manager.get('WORDS_REMOVE', [])
-            loop_sound_naming = settings_manager.get('SOUND_NAMING_FOR_LOOPS', [])
-            naming_convention = settings_manager.get('NAMING_CONVENTION', [])
-            loop_naming = settings_manager.get('NAMING_FOR_LOOPS', '')
-            stop_event_for_loops = settings_manager.get('STOP_EVENT_FOR_LOOPS', False)
-            seek_random_min = settings_manager.get("SEEK_RANDOM_MIN", 0.0)
-            seek_random_max = settings_manager.get("SEEK_RANDOM_MAX", 0.0)
+        # get actual info
+        words_remove = settings_manager.get('WORDS_REMOVE', [])
+        loop_sound_naming = settings_manager.get('SOUND_NAMING_FOR_LOOPS', [])
+        naming_convention = settings_manager.get('NAMING_CONVENTION', [])
+        loop_naming = settings_manager.get('NAMING_FOR_LOOPS', '')
+        stop_event_for_loops = settings_manager.get('STOP_EVENT_FOR_LOOPS', False)
+        seek_random_min = settings_manager.get("SEEK_RANDOM_MIN", 0.0)
+        seek_random_max = settings_manager.get("SEEK_RANDOM_MAX", 0.0)
 
-            for obj in selected_objs:
-                # Skip anything that's not playable
-                if not obj["isPlayable"]:
-                    continue
+        for obj in selected_objs:
+            # Skip anything that's not playable
+            if not obj["isPlayable"]:
+                continue
 
-                original_name = obj["name"]
+            original_name = obj["name"]
 
-                # Remove words from the name (words_remove)
-                cleaned_name = original_name
-                for w in words_remove:
-                    cleaned_name = cleaned_name.replace(w, "")
+            # Remove words from the name (words_remove)
+            cleaned_name = original_name
+            for w in words_remove:
+                cleaned_name = cleaned_name.replace(w, "")
+            cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
+
+            # Check if the name indicates a loop
+            # (we look for items in loop_sound_naming)
+            is_loop = any(item in cleaned_name for item in loop_sound_naming)
+            if is_loop:
+                # Remove loop_sound_naming tokens
+                for token in loop_sound_naming:
+                    cleaned_name = cleaned_name.replace(token, "")
                 cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
+                
+                # Also remove the existing loop_naming if present, then reappend it
+                cleaned_name = cleaned_name.replace(loop_naming, "").strip("_")
+                cleaned_name = f"{cleaned_name}_{loop_naming}".strip("_")
 
-                # Check if the name indicates a loop
-                # (we look for items in loop_sound_naming)
-                is_loop = any(item in cleaned_name for item in loop_sound_naming)
-                if is_loop:
-                    # Remove loop_sound_naming tokens
-                    for token in loop_sound_naming:
-                        cleaned_name = cleaned_name.replace(token, "")
-                    cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
-                    
-                    # Also remove the existing loop_naming if present, then reappend it
-                    cleaned_name = cleaned_name.replace(loop_naming, "").strip("_")
-                    cleaned_name = f"{cleaned_name}_{loop_naming}".strip("_")
+            # Build children events (Play/Seek + optional Stop)
+            children = []
 
-                # Build children events (Play/Seek + optional Stop)
-                children = []
+            play_event = create_play_or_seek_event(Path(cleaned_name), obj["id"], is_loop, client)
+            if play_event:
+                children.append(play_event)
+                newly_created_event_names.append(play_event["name"])
 
-                play_event = create_play_or_seek_event(Path(cleaned_name), obj["id"], is_loop, client)
-                if play_event:
-                    children.append(play_event)
-                    newly_created_event_names.append(play_event["name"])
+            # Optionally create a Stop event for loops if setting is enabled
+            if is_loop and stop_event_for_loops:
+                stop_evt = create_event_stop(cleaned_name, obj["id"], client)
+                if stop_evt:
+                    children.append(stop_evt)
+                    newly_created_event_names.append(stop_evt["name"])
 
-                # Optionally create a Stop event for loops if setting is enabled
-                if is_loop and stop_event_for_loops:
-                    stop_evt = create_event_stop(cleaned_name, obj["id"], client)
-                    if stop_evt:
-                        children.append(stop_evt)
-                        newly_created_event_names.append(stop_evt["name"])
+            # Attach these events to the chosen WorkUnit/folder
+            set_args["objects"].append({
+                "object": wwu_path + "\\" + new_wwu,
+                "children": children,
+            })
 
-                # Attach these events to the chosen WorkUnit/folder
-                set_args["objects"].append({
-                    "object": wwu_path + "\\" + new_wwu,
-                    "children": children,
-                })
+            # Check if the AudioFileSource naming matches the naming_convention
+            audio_source_query = {
+                "waql": f'$ "{obj["id"]}" select this, descendants where type = "AudioFileSource"'
+            }
+            sources = client.call("ak.wwise.core.object.get", audio_source_query, options=options)
+            for source_item in sources["return"]:
+                source_name = source_item["name"]
+                if not any(conv in source_name for conv in naming_convention):
+                    incorrect_sources.append(source_name)
 
-                # Check if the AudioFileSource naming matches the naming_convention
-                audio_source_query = {
-                    "waql": f'$ "{obj["id"]}" select this, descendants where type = "AudioFileSource"'
+
+        # Actually create these objects in Wwise
+        client.call("ak.wwise.core.object.set", set_args)
+
+        # Retrieve the newly created event IDs and update the listbox
+        for e_name in newly_created_event_names:
+            event_query = {
+                "waql": f'$ from type Event where name = "{e_name}"'
+            }
+            get_options = {"return": ["id", "name", "path"]}
+            res = client.call("ak.wwise.core.object.get", event_query, options=get_options)
+
+            found = res.get("return", [])
+            if not found:
+                continue
+
+            wwise_id = found[0]["id"]
+            display_text = f"{e_name} [E]"
+            update_events_listbox(display_text, wwise_id)
+
+        # Handle randomization for any Seek events that were created
+        for event_name in created_event_seek_names:
+            seek_query = {
+                "waql": f'$ from object "Event:{event_name}" select children where actiontype = 36'
+            }
+            seek_actions = client.call("ak.wwise.core.object.get", seek_query, options=options)
+            for seek_item in seek_actions["return"]:
+                action_id = seek_item.get("id")
+                random_args = {
+                    "object": str(action_id),
+                    "enabled": True,
+                    "property": "SeekPercent",
+                    "min": seek_random_min,
+                    "max": seek_random_max,
                 }
-                sources = client.call("ak.wwise.core.object.get", audio_source_query, options=options)
-                for source_item in sources["return"]:
-                    source_name = source_item["name"]
-                    if not any(conv in source_name for conv in naming_convention):
-                        incorrect_sources.append(source_name)
+                client.call("ak.wwise.core.object.setRandomizer", random_args)
 
-
-            # Actually create these objects in Wwise
-            client.call("ak.wwise.core.object.set", set_args)
-
-            # Retrieve the newly created event IDs and update the listbox
-            for e_name in newly_created_event_names:
-                event_query = {
-                    "waql": f'$ from type Event where name = "{e_name}"'
-                }
-                get_options = {"return": ["id", "name", "path"]}
-                res = client.call("ak.wwise.core.object.get", event_query, options=get_options)
-
-                found = res.get("return", [])
-                if not found:
-                    continue
-
-                wwise_id = found[0]["id"]
-                display_text = f"{e_name} [E]"
-                update_events_listbox(display_text, wwise_id)
-
-            # Handle randomization for any Seek events that were created
-            for event_name in created_event_seek_names:
-                seek_query = {
-                    "waql": f'$ from object "Event:{event_name}" select children where actiontype = 36'
-                }
-                seek_actions = client.call("ak.wwise.core.object.get", seek_query, options=options)
-                for seek_item in seek_actions["return"]:
-                    action_id = seek_item.get("id")
-                    random_args = {
-                        "object": str(action_id),
-                        "enabled": True,
-                        "property": "SeekPercent",
-                        "min": seek_random_min,
-                        "max": seek_random_max,
-                    }
-                    client.call("ak.wwise.core.object.setRandomizer", random_args)
-
-            # If there are any sources that do not match the naming convention, show error
-            if incorrect_sources and len(naming_convention) > 0:
-                root = tk.Tk()
-                root.withdraw()
-                incorrect_sources_message = "\n".join(incorrect_sources)
-                messagebox.showerror(
-                    "Error",
-                    f"Incorrect naming convention. The .wav file name should contain {naming_convention}.\n"
-                    f"Incorrect source names:\n{incorrect_sources_message}",
-                )
+        # If there are any sources that do not match the naming convention, show error
+        if incorrect_sources and len(naming_convention) > 0:
+            root = tk.Tk()
+            root.withdraw()
+            incorrect_sources_message = "\n".join(incorrect_sources)
+            messagebox.showerror(
+                "Error",
+                f"Incorrect naming convention. The .wav file name should contain {naming_convention}.\n"
+                f"Incorrect source names:\n{incorrect_sources_message}",
+            )
 
     except Exception as e:
         traceback.print_exc()
@@ -503,113 +512,111 @@ def create_events_for_selection(wwu_path, new_wwu):
 
 
 def get_workunit_path():
-    with WaapiClient() as client:
-        # Define the options for the query
-        options = {"return": ["path", "id", "isPlayable", "originalWavFilePath", "parent.id", "ChannelConfigOverride", "name", "type"]}
+    global client
+    # Define the options for the query
+    options = {"return": ["path", "id", "isPlayable", "originalWavFilePath", "parent.id", "ChannelConfigOverride", "name", "type"]}
 
-        # Query for workunits
-        wwu_query = {
-            'waql': '$ from type workunit where category = "Events"',
-        }
-        wwu_result = client.call("ak.wwise.core.object.get", wwu_query, options=options)
+    # Query for workunits
+    wwu_query = {
+        'waql': '$ from type workunit where category = "Events"',
+    }
+    wwu_result = client.call("ak.wwise.core.object.get", wwu_query, options=options)
 
-        # Query for folders
-        folder_query = {
-            'waql': '$ from type folder where category = "Events"',
-        }
-        folder_result = client.call("ak.wwise.core.object.get", folder_query, options=options)
+    # Query for folders
+    folder_query = {
+        'waql': '$ from type folder where category = "Events"',
+    }
+    folder_result = client.call("ak.wwise.core.object.get", folder_query, options=options)
 
-        # Combine the results
-        combined_results = wwu_result.get('return', []) + folder_result.get('return', [])
+    # Combine the results
+    combined_results = wwu_result.get('return', []) + folder_result.get('return', [])
 
-        # Extract paths
-        paths = [item['path'] for item in combined_results]
-        return paths
+    # Extract paths
+    paths = [item['path'] for item in combined_results]
+    return paths
 
 
 def get_workunit_names():
-    with WaapiClient() as client:
-        options_wwu = {
-            "return": [
-                "path",
-                "id",
-                "isPlayable",
-                "originalWavFilePath",
-                "parent.id",
-                "ChannelConfigOverride",
-                "name",
-                "type"
-            ]
-        }
-        wwuargs = {
-            'waql': '$ from type workunit where category = "Events"',
-        }
+    global client
+    options_wwu = {
+        "return": [
+            "path",
+            "id",
+            "isPlayable",
+            "originalWavFilePath",
+            "parent.id",
+            "ChannelConfigOverride",
+            "name",
+            "type"
+        ]
+    }
+    wwuargs = {
+        'waql': '$ from type workunit where category = "Events"',
+    }
 
-        result = client.call("ak.wwise.core.object.get", wwuargs, options=options_wwu)['return']
-        names = list(map(lambda x: x['name'], result))
-        paths = list(map(lambda x: x['path'], result))
-        return names
+    result = client.call("ak.wwise.core.object.get", wwuargs, options=options_wwu)['return']
+    names = list(map(lambda x: x['name'], result))
+    paths = list(map(lambda x: x['path'], result))
+    return names
 
 
 def get_folder_names():
-    with WaapiClient() as client:
-        options_wwu = {
-            "return": [
-                "path",
-                "id",
-                "isPlayable",
-                "originalWavFilePath",
-                "parent.id",
-                "ChannelConfigOverride",
-                "name",
-                "type"
-            ]
-        }
-        wwuargs = {
-            'waql': '$ from type folder where category = "Events"',
-        }
+    global client
+    options_wwu = {
+        "return": [
+            "path",
+            "id",
+            "isPlayable",
+            "originalWavFilePath",
+            "parent.id",
+            "ChannelConfigOverride",
+            "name",
+            "type"
+        ]
+    }
+    wwuargs = {
+        'waql': '$ from type folder where category = "Events"',
+    }
 
-        result = client.call("ak.wwise.core.object.get", wwuargs, options=options_wwu)['return']
-        names = list(map(lambda x: x['name'], result))
-        paths = list(map(lambda x: x['path'], result))
-        return names
+    result = client.call("ak.wwise.core.object.get", wwuargs, options=options_wwu)['return']
+    names = list(map(lambda x: x['name'], result))
+    paths = list(map(lambda x: x['path'], result))
+    return names
 
 
-workunit_names = get_workunit_names()
-workunit_paths = get_workunit_path()
-folder_names = get_folder_names()
+
 
 
 def get_all_workunits():
     """
     Returns list ( (name, path), ... ) of every work unit in the 'Events' category.
     """
-    with WaapiClient() as client:
-        options = {"return": ["id", "name", "path", "type"]}
-        wwu_query = {
-            'waql': '$ from type WorkUnit where category = "Events"',
-        }
-        result = client.call("ak.wwise.core.object.get", wwu_query, options=options)
-        all_wwu = []
-        for item in result.get("return", []):
-            all_wwu.append((item['name'], item['path']))
-        return all_wwu
+    global client
+    options = {"return": ["id", "name", "path", "type"]}
+    wwu_query = {
+        'waql': '$ from type WorkUnit where category = "Events"',
+    }
+    result = client.call("ak.wwise.core.object.get", wwu_query, options=options)
+    all_wwu = []
+    for item in result.get("return", []):
+        all_wwu.append((item['name'], item['path']))
+    return all_wwu
 
 
 def get_all_folders():
     """
     Returns list ( (name, path), ... ) of every folder in the 'Events' category.
     """
-    with WaapiClient() as client:
-        options = {"return": ["id", "name", "path", "type"]}
-        folder_query = {
-            'waql': '$ from type Folder where category = "Events"',
-        }
-        result = client.call("ak.wwise.core.object.get", folder_query, options=options)
-        all_folders = []
-        for item in result.get("return", []):
-            all_folders.append((item['name'], item['path']))
-        return all_folders
+    global client
+    options = {"return": ["id", "name", "path", "type"]}
+    folder_query = {
+        'waql': '$ from type Folder where category = "Events"',
+    }
+    result = client.call("ak.wwise.core.object.get", folder_query, options=options)
+    all_folders = []
+    for item in result.get("return", []):
+        all_folders.append((item['name'], item['path']))
+    return all_folders
 
 
 def get_parent_path(full_path):
@@ -1266,7 +1273,6 @@ def validate_seek_percent(*args):
         seek_percent_entry.configure(fg_color=color_error_red)
 
 
-
 def validate_seek_min(*args):
     """
     Validation and update of 'seek_random_min'.
@@ -1581,32 +1587,32 @@ def return_events_listbox(listbox):
 
 def select_object_in_wwise(object_name):
     try:
-        with WaapiClient() as client:
-            options = {
-                "return": [
-                    "path",
-                    "id",
-                    "isPlayable",
-                    "originalWavFilePath",
-                    "parent.id",
-                    "ChannelConfigOverride",
-                    "name"
-                ]
-            }
-            query_result = client.call(
-                "ak.wwise.core.object.get",
-                {"waql": f"$ from type event, workunit, folder where name = \"{object_name}\" where path: \"events\""},
-                options=options
-            )
-            item_name = (query_result['return'][0]['id'])
-            item_path = (query_result['return'][0]['path'])
-            print(item_path)
-            print([item_name])
+        global client
+        options = {
+            "return": [
+                "path",
+                "id",
+                "isPlayable",
+                "originalWavFilePath",
+                "parent.id",
+                "ChannelConfigOverride",
+                "name"
+            ]
+        }
+        query_result = client.call(
+            "ak.wwise.core.object.get",
+            {"waql": f"$ from type event, workunit, folder where name = \"{object_name}\" where path: \"events\""},
+            options=options
+        )
+        item_name = (query_result['return'][0]['id'])
+        item_path = (query_result['return'][0]['path'])
+        print(item_path)
+        print([item_name])
 
-            client.call("ak.wwise.ui.commands.execute", {
-                "command": "FindInProjectExplorerSyncGroup1",
-                "objects": [item_name]
-            })
+        client.call("ak.wwise.ui.commands.execute", {
+            "command": "FindInProjectExplorerSyncGroup1",
+            "objects": [item_name]
+        })
 
     except Exception as e:
         print(f"Error in selecting object in Wwise: {e}")
@@ -1628,11 +1634,11 @@ def on_listbox_select(event):
             if selected_display_text in created_items_dict:
                 wwise_id = created_items_dict[selected_display_text]
                 try:
-                    with WaapiClient() as client:
-                        client.call("ak.wwise.ui.commands.execute", {
-                            "command": "FindInProjectExplorerSyncGroup1",
-                            "objects": [wwise_id]
-                        })
+                    global client
+                    client.call("ak.wwise.ui.commands.execute", {
+                        "command": "FindInProjectExplorerSyncGroup1",
+                        "objects": [wwise_id]
+                    })
                 except Exception as e:
                     print(f"Error in selecting object in Wwise: {e}")
 
@@ -1661,14 +1667,12 @@ def copy_to_clipboard(event):
 
 workunit_listbox.bind('<<ListboxSelect>>', on_listbox_select)
 
-for name in workunit_paths:
-    workunit_listbox.insert(tk.END, name)
 
 project_name = "Not Connected"
 try:
-    with WaapiClient() as client:
-        info = client.call("ak.wwise.core.getProjectInfo")
-        project_name = info.get("name", "Not Connected")
+    #global client
+    info = client.call("ak.wwise.core.getProjectInfo")
+    project_name = info.get("name", "Not Connected")
 except Exception:
     pass
 
@@ -1686,6 +1690,23 @@ window.grid_columnconfigure(0, weight=4)
 window.grid_columnconfigure(1, weight=1)
 
 def main():
-    window.mainloop()
+    global client
+    client = open_waapi_connection()
+
+    global workunit_names, workunit_paths, folder_names
+    workunit_names = get_workunit_names()
+    workunit_paths = get_workunit_path()
+    folder_names = get_folder_names()
+    
+    for name in workunit_paths:
+        workunit_listbox.insert(tk.END, name)
+
+    try:
+    # Run gui
+        window.mainloop()
+    finally:
+    # Closing connection
+        close_waapi_connection()
+
 if __name__ == "__main__":
     main()
