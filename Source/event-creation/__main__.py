@@ -192,6 +192,9 @@ def format_event_name(name, prefix, settings_manager):
     # Rebuild the name with underscores
     formatted_name = '_'.join(formatted_words)
 
+    if prefix and not prefix.endswith('_'):
+        prefix = prefix + '_'
+
     # Prefix the name and remove any trailing underscores
     formatted_name = f"{prefix}{formatted_name}".strip('_')
 

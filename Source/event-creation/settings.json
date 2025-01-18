@@ -1,7 +1,7 @@
 {
     "NAMING_CONVENTION": [],
     "WORDS_REMOVE": [],
-    "NAMING_FOR_LOOPS": "_loop",
+    "NAMING_FOR_LOOPS": "Loop",
     "SOUND_NAMING_FOR_LOOPS": [
         "LP",
         "lp",
@@ -9,8 +9,8 @@
         "loop"
     ],
     "WORDS_NOT_CAPITALIZE": [],
-    "PLAY_NAMING_CONVENTION": "Play_",
-    "STOP_NAMING_CONVENTION": "Stop_",
+    "PLAY_NAMING_CONVENTION": "Play",
+    "STOP_NAMING_CONVENTION": "Stop",
     "STOP_EVENT_FOR_LOOPS": true,
     "LETTER_CASE_EVENT_NAME": "upper",
     "PLAY_LOOP_FADE_TIME": 1.0,
