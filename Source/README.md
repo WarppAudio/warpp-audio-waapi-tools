@@ -65,5 +65,3 @@ Restart Wwise or use the command Reload Commands (Ctrl + Shift + K)
 ## 📬 Feedback & Contributions
 
 Have suggestions or found a bug? Feel free to open an issue or submit a pull request!
-
-Happy automating! 🎮 🎵
