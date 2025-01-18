@@ -8,6 +8,8 @@ Before using the tool, ensure that:
 
 > **Note**: All settings are automatically saved whenever you make changes in the tool's interface
 
+>   **Important**: After making any changes to settings, it's recommended to restart the tool to ensure all changes are properly applied.
+
 ## 🖥️ Tool Documentation
 
 ### 🎯 Main Interface
@@ -75,6 +77,7 @@ Before using the tool, ensure that:
 - Helps users confirm that the tool is connected to the correct Wwise project.
 
 ### ⚙️ Settings Panel
+ >**Important**: After making any changes to settings, it's recommended to restart the tool to ensure all changes are properly applied.
 
 ![image](https://github.com/user-attachments/assets/1a258669-d77f-40d6-9a2b-74a4318a10f1)
 
