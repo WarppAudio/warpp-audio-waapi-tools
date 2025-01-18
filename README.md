@@ -2,12 +2,12 @@
 
 Welcome to the **warpp-audio-waapi-tools** repository! This project provides tools for automating tasks within Audiokinetic Wwise using the Wwise Authoring API (WAAPI).
 
-## 📂 Repository Structure
+## 📂 Repository Contents
 
-This repository contains two main folders:
+This repository is organized into two main parts:
 
-### 🚀 [Executables](./Executables-WIP)
-- Pre-compiled version of the tools
+### 🚀 [Releases](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases)
+- Pre-compiled versions of the tools
 - No Python installation required
 - Quick and simple setup
 - Perfect for users who just want to use the tools
@@ -20,13 +20,13 @@ This repository contains two main folders:
 
 ## 🤔 Which Version Should I Use?
 
-### Choose Executables if you:
+### Choose **Releases** if you:
 - Want a quick setup
 - Don't need to modify the tools
 - Don't want to deal with Python installation
 - Just want to get started right away
 
-### Choose Source if you:
+### Choose **Source** if you:
 - Want to customize the tools
 - Are comfortable with Python
 - Plan to contribute to development
@@ -34,8 +34,8 @@ This repository contains two main folders:
 
 ## 📚 Documentation
 
-Detailed setup instructions are available in each folder's README:
-- [Executables Setup Guide](./Executables-WIP/README.md)
+Detailed setup instructions are available in each folder's README/Description:
+- [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases)
 - [Source Code Setup Guide](./Source/README.md)
 
 ## ✨ Features
@@ -45,7 +45,7 @@ Detailed setup instructions are available in each folder's README:
 
 ## 🔧 Requirements
 
-### For Executables:
+### For Releases:
 - Wwise 2022.1.x +
 - WAAPI enabled in Wwise preferences
 
@@ -53,14 +53,13 @@ Detailed setup instructions are available in each folder's README:
 - Python 3.8+
 - Wwise 2022.1.x +
 - WAAPI enabled in Wwise preferences
-- Various Python dependencies (listed in Source/requirements.txt)
+- See requirements.txt for Python dependencie (listed in Source/requirements.txt)
 
 ## 📬 Support & Contributions
 
-- Found a bug? Open an issue!
-- Want to contribute? Submit a pull request!
+- Found a bug? Open an issue
+- Want to contribute? Submit a pull request
 - Need help? Check documentation!
 
-Happy automating! 🎮 🎵
+*Note: For the most up-to-date instructions, always check the README in your chosen version's folder (Source) or the [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases).*
 
-*Note: For the most up-to-date instructions, always check the README in your chosen version's folder (Source or Executables).*
