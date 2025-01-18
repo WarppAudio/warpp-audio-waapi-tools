@@ -76,7 +76,7 @@ Before using the tool, ensure that:
 
 ### ⚙️ Settings Panel
 
-![image](https://github.com/user-attachments/assets/c5670f87-59c5-4761-b561-52a85230d208)
+![image](https://github.com/user-attachments/assets/1a258669-d77f-40d6-9a2b-74a4318a10f1)
 
 
 1. **Stop Events Loops**
@@ -152,6 +152,8 @@ Before using the tool, ensure that:
 - This field lists specific words that should not be altered when formatting event names.
 
 - For example, AMB, ENM will remain unchanged in the final event names.
+
+- Patterns containing # match digits (e.g. SFX# covers SFX1, SFX123, etc.) and remain unchanged.
 
 13. **Seek Values (Seek %, Min %, Max %)**
 
