@@ -39,6 +39,8 @@ Download this whole repository zip file from GitHub.
 
 Unzip the contents of the warpp-audio-waapi-tools folder into the Add-ons directory.
 
+![image](https://github.com/user-attachments/assets/d7bf61f4-ee8e-4ac9-94f7-02520dc0b10e)
+
 > **Important**: If you already have an existing Commands folder with a '.json' file for commands, move the '.json' file from this repository into your existing Commands folder to avoid overwriting your current file.
 
 Install the required dependencies using the following command:
