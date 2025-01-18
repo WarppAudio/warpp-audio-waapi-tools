@@ -1637,7 +1637,7 @@ def select_object_in_wwise(object_name):
         print([item_name])
 
         client.call("ak.wwise.ui.commands.execute", {
-            "command": "FindInProjectExplorerSyncGroup1",
+            "command": "FindInProjectExplorerSelectionChannel1",
             "objects": [item_name]
         })
 
@@ -1663,7 +1663,7 @@ def on_listbox_select(event):
                 try:
                     global client
                     client.call("ak.wwise.ui.commands.execute", {
-                        "command": "FindInProjectExplorerSyncGroup1",
+                        "command": "FindInProjectExplorerSelectionChannel1",
                         "objects": [wwise_id]
                     })
                 except Exception as e:
