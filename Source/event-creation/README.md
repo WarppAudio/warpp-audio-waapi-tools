@@ -76,7 +76,8 @@ Before using the tool, ensure that:
 
 ### ⚙️ Settings Panel
 
-![event_creation_settings_section](https://github.com/user-attachments/assets/87c62c69-2cdc-4aa0-ac77-f00cc0325571)
+![image](https://github.com/user-attachments/assets/c5670f87-59c5-4761-b561-52a85230d208)
+
 
 1. **Stop Events Loops**
 
