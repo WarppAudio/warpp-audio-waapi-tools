@@ -1735,12 +1735,10 @@ def main():
     
     window.protocol("WM_DELETE_WINDOW", on_close)
 
-    try:
-    # Run gui
-        window.mainloop()
-    finally:
-    # Closing connection
-        close_waapi_connection()
+    #Run gui
+    window.mainloop()
+
+        
 
 if __name__ == "__main__":
     main()
