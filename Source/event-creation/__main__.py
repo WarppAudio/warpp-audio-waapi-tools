@@ -1698,7 +1698,7 @@ project_label = ctk.CTkLabel(
     anchor="e"
 )
 project_label.grid(row=3, column=2, padx=15, sticky='es')
-icon_path = Path(__file__).parent / "icons" / "warpp_logo_white.ico"
+icon_path = Path(__file__).parent / "icons" / "warpp_logo_black.ico"
 window.iconbitmap(str(icon_path))
 
 window.grid_columnconfigure(0, weight=4)
