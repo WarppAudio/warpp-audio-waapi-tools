@@ -35,11 +35,20 @@ settings_valid = True
 class SettingsManager:
     def __init__(self):
         
+
         def get_resource_path(filename):
-            base_path = os.path.dirname(os.path.realpath(__file__))
+            # Running  „frozen” (.exe)
+            if getattr(sys, 'frozen', False):
+                base_path = os.path.dirname(sys.executable)  # folder z .exe
+            else:
+                # Running as  .py
+                base_path = os.path.dirname(os.path.realpath(__file__))
+
             return os.path.join(base_path, filename)
 
         self.path = get_resource_path('settings.json')
+
+
         self.settings = {
             'NAMING_CONVENTION': [],
             'WORDS_REMOVE': [],
