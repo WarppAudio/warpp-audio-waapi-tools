@@ -36,7 +36,7 @@ class SettingsManager:
     def __init__(self):
         
         def get_resource_path(filename):
-            base_path = os.path.dirname(os.path.realpath(sys.argv[0]))
+            base_path = os.path.dirname(os.path.realpath(__file__))
             return os.path.join(base_path, filename)
 
         self.path = get_resource_path('settings.json')
