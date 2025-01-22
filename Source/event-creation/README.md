@@ -54,6 +54,8 @@ Before using the tool, ensure that:
 
 - Events ([E]).
 
+- Folders ([F])
+
 - Includes a trash icon that allows users to clear the list of created items.
 
 - Clicking on an item selects it in Wwise.
@@ -74,8 +76,6 @@ Before using the tool, ensure that:
 
 - Displays the name of the connected Wwise project (test-waapi-2024 in this case).
 
-- Helps users confirm that the tool is connected to the correct Wwise project.
-
 ### ⚙️ Settings Panel
  >**Important**: After making any changes to settings, it's recommended to restart the tool to ensure all changes are properly applied.
 
@@ -84,15 +84,13 @@ Before using the tool, ensure that:
 
 1. **Stop Events Loops**
 
-- This checkbox enables or disables the automatic creation of "Stop" events for looping sounds.
-
-- If checked, the tool will automatically generate events to stop loops.
+- This checkbox enables or disables the automatic creation of "Stop" events for loop sounds.
 
 2. **Seek Action Loops**
 
-- This checkbox enables or disables the creation of "Seek" actions for looping sounds.
+- This checkbox enables or disables the creation of "Seek" actions for loop sounds.
 
-- If checked, the tool will add seek events for loops, starting playback at a specific percentage.
+- If checked, the tool will add seek events for loops, starting playback at a specific percentage with randomizer.
 
 3. **Capitalize Events / Lowercase Events**
 
@@ -106,31 +104,25 @@ Before using the tool, ensure that:
 
 - This field defines the fade-in duration (in seconds) for "Play" actions when starting looping sounds.
 
-- The value determines how smoothly the sound starts playing.
-
 5. **Stop fade loop [s]**
 
 - This field specifies the fade-out duration (in seconds) for "Stop" actions when stopping looping sounds.
 
-- The value ensures smooth sound transitions when stopping.
-
 6. **Loops Sound Naming**
 
-- This field allows specifying keywords or suffixes (e.g., _lp, _loop) that identify looping sounds.
+- This field allows specifying keywords or suffixes (e.g., lp, loop) that identify looping sounds.
 
 - The tool uses these case-sensitive keywords to detect loops during event creation.
 
 7. **Loops Events Naming**
 
-- This field defines the naming convention for loop-related events.
-
-- For example, _Loop can be appended to event names to signify they are associated with loops.
+- This field defines the suffix to be appended to loop-related event names. For example, entering "Loop" will add it as a suffix to indicate loop  event.
 
 8. **Play Events Naming**
 
 - This field defines the prefix for "Play" events.
 
-- For example, Play_ will be added to event names to follow a consistent naming convention.
+- For example, "Play_" will be added to event names to follow a consistent naming convention.
 
 9. **Stop Events Naming**
 
@@ -167,3 +159,4 @@ Before using the tool, ensure that:
 - Max %: Sets the maximum percentage for randomization of the "Seek" action.
 
 - These values determine how the playback position is randomized in looping events.
+
