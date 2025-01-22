@@ -5,7 +5,7 @@
             "displayName":"Event Creation",
             "defaultShortcut":"",
             "program":"pyw.exe",
-            "startMode":"MultipleSelectionSingleProcessSpaceSeparated",
+            "startMode":"SingleSelectionSingleProcess",
             "args":"-3 ${CurrentCommandDirectory}\\..\\event-creation ${id}",
             "cwd":"",
             "contextMenu":{
