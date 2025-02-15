@@ -268,7 +268,7 @@ class MainApp(CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Wwise Aux Mix Helper")
+        self.title("Reverb Mixing Helper")
         self.geometry("800x400")
         self.attributes('-topmost', True)
 
