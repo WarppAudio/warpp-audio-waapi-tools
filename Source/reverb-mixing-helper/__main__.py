@@ -152,6 +152,10 @@ class Sound:
         self.icon_label.after(delay_ms, self.check_state_and_loop)
 
     def check_state_and_loop(self):
+        # If the sound is not supposed to be playing, exit the function
+        if not self.is_playing:
+            return
+
         if not self.transport_id or not self.app.client:
             return
         try:
@@ -165,11 +169,18 @@ class Sound:
             print(f"[Sound {self.index}] Transport state: {repr(current_state)}")
 
             if current_state in ["stopped", "finished", "ended"]:
-                if self.loop_check.get() == 1:
-                    play_args = {"transport": self.transport_id, "action": "play"}
-                    self.app.client.call("ak.wwise.core.transport.executeAction", play_args)
-                    self.is_playing = True
-                    self.schedule_check_state()
+                # If loop is enabled and sound should continue playing, delay before replaying
+                if self.loop_check.get() == 1 and self.is_playing:
+                    try:
+                        delay_str = self.app.sequence_delay_entry.get().strip()
+                        delay = int(delay_str) if delay_str else 0
+                    except Exception as ex:
+                        delay = 0
+                    # Delay the playback by the specified delay
+                    self.app.after(delay, lambda: self.app.client.call("ak.wwise.core.transport.executeAction",
+                                                                    {"transport": self.transport_id, "action": "play"}))
+                    # Schedule the next state check with the same delay
+                    self.schedule_check_state(delay_ms=delay)
                     return
                 else:
                     self.is_playing = False
@@ -198,6 +209,8 @@ class Sound:
         except Exception as e:
             traceback.print_exc()
             print(f"Error in check_state_and_loop: {e}")
+
+
 
     def toggle_play_stop(self, sequence_playing=False):
         object_id = self.sound_id_entry.get().strip()
