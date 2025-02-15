@@ -12,6 +12,19 @@
                     "basePath":"WAAPI Tools"
                 },
             "redirectOutputs":false
+        },
+        {
+            "id":"warpp.reverb-mixing-helper",
+            "displayName":"Reverb Mixing Helper",
+            "defaultShortcut":"",
+            "program":"pyw.exe",
+            "startMode":"SingleSelectionSingleProcess",
+            "args":"-3 ${CurrentCommandDirectory}\\..\\reverb-mixing-helper ${id}",
+            "cwd":"",
+            "contextMenu":{
+                    "basePath":"WAAPI Tools"
+                },
+            "redirectOutputs":false
         }        
     ]
 }
