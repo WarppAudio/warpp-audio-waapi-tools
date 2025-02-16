@@ -61,5 +61,5 @@ Detailed setup instructions are available in each folder's README/Description:
 - Want to contribute? Submit a pull request
 - Need help? Check documentation!
 
-*Note: For the most up-to-date instructions, always check the README in your chosen version's folder (Source) or the [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases).*
+*Note: For the most up-to-date instructions, always check the README in your chosen version's folder (Source) or the [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/tags).*
 
