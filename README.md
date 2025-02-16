@@ -6,7 +6,7 @@ Welcome to the **warpp-audio-waapi-tools** repository! This project provides too
 
 This repository is organized into two main parts:
 
-### 🚀 [Releases](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases)
+### 🚀 [Releases](https://github.com/WarppAudio/warpp-audio-waapi-tools/tags)
 - Pre-compiled versions of the tools
 - No Python installation required
 - Quick and simple setup
@@ -35,7 +35,7 @@ This repository is organized into two main parts:
 ## 📚 Documentation
 
 Detailed setup instructions are available in each folder's README/Description:
-- [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/releases)
+- [Release Setup Guide](https://github.com/WarppAudio/warpp-audio-waapi-tools/tags)
 - [Source Code Setup Guide](./Source/README.md)
 
 ## ✨ Features
