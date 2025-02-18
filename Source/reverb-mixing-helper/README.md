@@ -24,7 +24,7 @@ A powerful tool designed to streamline the process of auditioning and mixing aux
 ### Important Notes
 
 ⚠️ **Before You Begin**:
-- It's recommended to move sounds you want to test into a separate/test work unit
+-It's recommended to move sounds you want to test into a separate/test work unit, because the script doesn't revert changes made before running the script.
 
 ### 📥 Loading Sounds
 
