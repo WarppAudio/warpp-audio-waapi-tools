@@ -25,7 +25,6 @@ A powerful tool designed to streamline the process of auditioning and mixing aux
 
 ⚠️ **Before You Begin**:
 - It's recommended to move sounds you want to test into a separate/test work unit
-- The script does not set "override parent" checkbox in the user-defined aux sends window
 
 ### 📥 Loading Sounds
 
