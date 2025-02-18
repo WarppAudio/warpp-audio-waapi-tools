@@ -443,6 +443,14 @@ class MainApp(CTk):
                         try:
                             self.client.call("ak.wwise.core.object.setReference", set_args)
                             print(f"Updated Aux Send for sound {sound_id} to {id_aux}")
+                            #overide parrent user aux sends
+                            override_args = {
+                            "object": sound_id,
+                            "property": "OverrideUserAuxSends", 
+                            "value": True
+                            }
+                            self.client.call("ak.wwise.core.object.setProperty", override_args)
+                            
                         except Exception as aux_e:
                             print(f"Failed to set Aux Send for sound {sound_id}: {aux_e}")
         except Exception as e:
