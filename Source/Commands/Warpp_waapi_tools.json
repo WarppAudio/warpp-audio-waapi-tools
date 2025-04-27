@@ -25,6 +25,19 @@
                     "basePath":"WAAPI Tools"
                 },
             "redirectOutputs":false
-        }        
+        },
+        {
+            "id":"warpp.attenuation-batch-edit",
+            "displayName":"Attenuation Batch Edit",
+            "defaultShortcut":"",
+            "program":"pyw.exe",
+            "startMode":"SingleSelectionSingleProcess",
+            "args":"-3 ${CurrentCommandDirectory}\\..\\attenuation-batch-edit ${id}",
+            "cwd":"",
+            "contextMenu":{
+                    "basePath":"WAAPI Tools"
+                },
+            "redirectOutputs":false
+        }
     ]
 }
