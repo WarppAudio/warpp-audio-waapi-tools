@@ -706,12 +706,8 @@ class AttenuationCurveEditor:
 
 # main window
 app = ctk.CTk()
-
-#ignore tk inter errors
-def ignore_tk_errors(exc, val, tb):
-    return
-#app.report_callback_exception = ignore_tk_errors
-app.title("Dynamic Attenuation Curve Editor")
+app.resizable(False, False) 
+app.title("Attenuation Batch Edit")
 
 editor = AttenuationCurveEditor(app)
 
