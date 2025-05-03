@@ -42,6 +42,7 @@ Detailed setup instructions are available in each folder's README/Description:
 
 - Event Creation Tool
 - More tools coming soon!
+- Attenuation Batch Edit
 
 ## 🔧 Requirements
 
