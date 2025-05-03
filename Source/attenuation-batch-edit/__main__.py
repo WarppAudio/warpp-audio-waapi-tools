@@ -358,8 +358,6 @@ class AttenuationCurveEditor:
         self.graph_display_status = 'no_att_selected'
         
         self.get_attenuation_X_label = ctk.CTkLabel(self.master, text="X %")
-        self.X_label_state = True
-        self.get_attenuation_X_label.bind("<Button-1>", self.X_label_type_toggle)
         self.get_attenuation_Y_label = ctk.CTkLabel(self.master, text="Y")
         self.add_point_button = ctk.CTkButton(self.master, text="Add Point", command=self.add_point,
                                               fg_color="#404040", hover_color="#303030")
@@ -410,12 +408,6 @@ class AttenuationCurveEditor:
             self.connection_status_label = ctk.CTkLabel(self.info_frame, text="Nie można połączyć z Wwise")
             self.connection_status_label.grid(row=0, column=0, sticky="w", padx=5)
 
-    def X_label_type_toggle(self, event):
-        self.X_label_state = not self.X_label_state
-        if self.X_label_state:
-            self.get_attenuation_X_label.configure(text="X %")
-        else:
-            self.get_attenuation_X_label.configure(text="X Rel")
 
     def show_controls(self):
         self.get_attenuation_X_label.grid(row=1, column=3, pady=5)
