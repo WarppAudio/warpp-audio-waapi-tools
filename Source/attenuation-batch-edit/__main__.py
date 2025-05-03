@@ -146,7 +146,7 @@ class AttenuationPoint:
 
         #  +/- Buttons 
         self.X_decrease_button_large = ChangeValueButton(master, ICON_DIR / "minus_icon.png", size=(17, 17), command=lambda: self.change_x_or_y_value('x', -10))
-        self.X_decrease_button_large.grid(row=index, column=1, sticky="e", padx=(5,0), pady=5) # Dodano padx/pady
+        self.X_decrease_button_large.grid(row=index, column=1, sticky="e", padx=(5,0), pady=5) 
         self.X_decrease_button_small = ChangeValueButton(master, ICON_DIR / "minus_icon.png", size=(10, 10), command=lambda: self.change_x_or_y_value('x', -1))
         self.X_decrease_button_small.grid(row=index, column=2, sticky="e", padx=0, pady=5)
         self.X_increase_button_small = ChangeValueButton(master, ICON_DIR / "plus_icon.png", size=(10, 10), command=lambda: self.change_x_or_y_value('x', 1))
@@ -163,7 +163,7 @@ class AttenuationPoint:
         self.Y_increase_button_large = ChangeValueButton(master, ICON_DIR / "plus_icon.png", size=(17, 17), command=lambda: self.change_x_or_y_value('y', 10))
         self.Y_increase_button_large.grid(row=index, column=12, sticky="w", padx=(0,5), pady=5)
 
-        # ComboBox (bez zmian)
+        # ComboBox 
         self.att_curve_string = ctk.StringVar(value=shape_display_map["Linear"])
         self.att_type_combo = ctk.CTkComboBox(
             master, values=list(shape_display_map.values()), variable=self.att_curve_string,
@@ -183,14 +183,14 @@ class AttenuationPoint:
 
     # --- Helper methods for storing previous valuesRetry ---
     def store_previous_x_value(self, event=None): 
-        """Zapisuje aktualną wartość X przed próbą jej zmiany."""
+        """Stores the current X value before attempting to change it."""
         try:
             self.previous_x_value = self.x.get()
         except (ValueError, ctk.TclError): 
              self.previous_x_value = 0.0 
 
     def store_previous_y_value(self, event=None): 
-        """Zapisuje aktualną wartość Y przed próbą jej zmiany."""
+        """Stores the current Y value before attempting to change it."""
         try:
             self.previous_y_value = self.y.get()
         except (ValueError, ctk.TclError):
@@ -276,11 +276,11 @@ class AttenuationPoint:
     # --- Methods invoked by the UI---
 
     def validate_x_entry(self, event):
-        """Wywoływane po edycji pola X."""
+        """Called after editing the X field."""
         self._set_validated_x(self.x_entry.get())
 
     def validate_y_entry(self, event):
-        """Wywoływane po edycji pola Y."""
+        """Called after editing the Y field."""
         self._set_validated_y(self.y_entry.get())
 
     def change_x_or_y_value(self, axis, value):
@@ -405,7 +405,7 @@ class AttenuationCurveEditor:
         except Exception as e:
             traceback.print_exc()
             print(str(e))
-            self.connection_status_label = ctk.CTkLabel(self.info_frame, text="Nie można połączyć z Wwise")
+            self.connection_status_label = ctk.CTkLabel(self.info_frame, text="Cannot connect to Wwise")
             self.connection_status_label.grid(row=0, column=0, sticky="w", padx=5)
 
 
@@ -702,7 +702,7 @@ class AttenuationCurveEditor:
         try:
             self.client.disconnect()
         except Exception as e:
-            print("Błąd przy zamykaniu połączenia:", e)
+            print("Error while closing the connection:", e)
 
 # main window
 app = ctk.CTk()
