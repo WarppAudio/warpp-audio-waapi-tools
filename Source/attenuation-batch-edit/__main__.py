@@ -543,12 +543,13 @@ class AttenuationCurveEditor:
             self.fig.patch.set_facecolor('#333333')
             self.canvas.draw()
             return
-        self.get_highest_x_value()
+        
+        # Use the same max X from get_attenuation (fallback to 100)
+        max_x = getattr(self, 'current_max_x', 100)
         x_vals = []
         y_vals = []
         shapes = [ display_to_shape[pt.att_curve_string.get()] for pt in self.points ]
         for point in self.points:
-            max_x = max(self.max_x_values.values(), default=100)
             x_vals.append(float(point.x.get()) * max_x / 100)
             y_vals.append(float(point.y.get()))
             shapes.append(point.att_curve_string.get())
@@ -612,12 +613,24 @@ class AttenuationCurveEditor:
             else:
                 xi, yi = linear_interpolation(x0, y0, x1, y1)
             self.ax.plot(xi, yi, marker='', color=selected_color)
+
         self.ax.plot(x_vals, y_vals_plot, 'o', color=selected_color)
         self.ax.grid(color='#3a3a3a')
         self.ax.set_facecolor('#2b2b2b')
         self.fig.patch.set_facecolor('#333333')
         if self.selected_att:
             self.ax.set_title(self.selected_att, color='#c8c3c3')
+
+        # Compute padding for X-axis (5% of max_x) and set range with padding
+        pad = max_x * 0.05
+        self.ax.set_xlim(-pad, max_x + pad)
+
+        # Force X-axis ticks so last tick matches original max_x
+        num_ticks = 6
+        xticks = np.linspace(0, max_x, num=num_ticks)
+        self.ax.set_xticks(xticks)
+        self.ax.set_xticklabels([str(int(t)) for t in xticks])
+
         self.canvas.draw()
 
     def set_attenuation(self):
@@ -684,6 +697,7 @@ class AttenuationCurveEditor:
             points = get_att.get('points', [])
             if points:
                 max_x_value = max(p['x'] for p in points)
+                self.current_max_x = max_x_value
                 for p in points:
                     scaled_x = (p['x'] / max_x_value) * 100
                     new_point = self._create_point(scaled_x, p['y'])
@@ -707,6 +721,7 @@ class AttenuationCurveEditor:
 # main window
 app = ctk.CTk()
 app.resizable(False, False) 
+app.attributes("-topmost", True)
 app.title("Attenuation Batch Edit")
 
 editor = AttenuationCurveEditor(app)
