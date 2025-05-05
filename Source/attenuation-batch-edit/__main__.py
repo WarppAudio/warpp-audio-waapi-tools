@@ -225,9 +225,7 @@ class AttenuationPoint:
         next_point_x = self.get_next_point_x()
         prev_point_x = self.get_prev_point_x()
 
-        # Only perform this check if we’re not an endpoint (which have fixed X = 0 or 100)
-        # We assume that endpoints’ X values shouldn’t be changed by the user
-        # (If endpoints can be adjusted, this logic will need to be updated)
+
 
         is_endpoint = (self.index == 0 or self.index == len(self.editor.points) - 1)
         if not is_endpoint:
@@ -290,13 +288,8 @@ class AttenuationPoint:
         self._set_validated_y(self.y_entry.get())
 
     def change_x_or_y_value(self, axis, value):
-        """Wywoływane po kliknięciu przycisków +/-."""
+        """Called after clicking the +/- buttons."""
         if axis == 'x':
-            # Read the current value *before* attempting the change
-            # This is important if a previous set attempt failed
-            # but the variable may have been temporarily altered by text input.
-            # It’s safer to use the stored `previous_x_value` as the base.
-            # Although retrieving via self.x.get() should work after refactoring.
             current_value = float(self.x.get())  # Get the current value from the DoubleVar
             new_value = current_value + value
             self._set_validated_x(new_value)
