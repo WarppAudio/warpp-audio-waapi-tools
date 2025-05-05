@@ -2,7 +2,6 @@ import customtkinter as ctk
 from waapi import WaapiClient
 import traceback
 from customtkinter import CTkImage
-import tkinter.messagebox as mb
 from PIL import Image
 import numpy as np
 from pathlib import Path
@@ -14,14 +13,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 ctk.set_appearance_mode("Dark")
 
 ICON_DIR = Path(__file__).resolve().parent / "Icons"
-ICON_CACHE: dict[tuple[str, tuple[int,int]], CTkImage] = {}
-
-def get_icon(path: Path, size: tuple[int,int]) -> CTkImage:
-    key = (str(path), size)
-    if key not in ICON_CACHE:
-        img = Image.open(path)
-        ICON_CACHE[key] = CTkImage(light_image=img, dark_image=img, size=size)
-    return ICON_CACHE[key]
 
 # Dictionary for Attenuation type label mapping 
 attenuation_map = {
@@ -111,7 +102,10 @@ class ChangeValueButton:
             self.label.bind('<Button-1>', lambda event: command())
     
     def load_image(self):
-       self.photo_image = get_icon(self.image_path, self.size)
+       
+        
+        image = Image.open(self.image_path)
+        self.photo_image = CTkImage(light_image=image, dark_image=image, size=self.size)
     
     def grid(self, **kwargs):
         self.label.grid(**kwargs)
@@ -173,7 +167,7 @@ class AttenuationPoint:
         self.att_curve_string = ctk.StringVar(value=shape_display_map["Linear"])
         self.att_type_combo = ctk.CTkComboBox(
             master, values=list(shape_display_map.values()), variable=self.att_curve_string,
-            state="readonly", command=lambda val: self.on_change_callback() # Use the new callback
+            state="readonly", command=lambda val: self.on_change_callback() # Użycie nowego callbacku
         )
         self.att_type_combo.grid(row=index, column=0, sticky="w", padx=5, pady=5)
 
@@ -202,7 +196,7 @@ class AttenuationPoint:
         except (ValueError, ctk.TclError):
              self.previous_y_value = 0.0
 
-    # CORE VALIDATION METHODS
+    # --- CENTRALNE METODY WALIDACJI ---
 
     def _set_validated_x(self, new_value_raw):
         """
@@ -225,20 +219,22 @@ class AttenuationPoint:
         next_point_x = self.get_next_point_x()
         prev_point_x = self.get_prev_point_x()
 
-
+        # Only perform this check if we’re not an endpoint (which have fixed X = 0 or 100)
+        # We assume that endpoints’ X values shouldn’t be changed by the user
+        # (If endpoints can be adjusted, this logic will need to be updated)
 
         is_endpoint = (self.index == 0 or self.index == len(self.editor.points) - 1)
         if not is_endpoint:
             #  Collision chect
             if (next_point_x is not None and clamped_value >= next_point_x) or \
                (prev_point_x is not None and clamped_value <= prev_point_x):
-                self.x.set(f"{self.previous_x_value:.3f}") # Restore if collision
+                self.x.set(self.previous_x_value) # Restore if collision
                 self.on_change_callback() # Call the callback even after reverting
 
                 return False
 
         # If validation passed successfully:
-        self.x.set(f"{clamped_value:.3f}")
+        self.x.set(clamped_value)
         self.previous_x_value = clamped_value # Update the stored valid value
 
         self.on_change_callback()
@@ -272,7 +268,7 @@ class AttenuationPoint:
             clamped_value = max(0.0, min(100.0, new_value_float))
 
         # Set the value
-        self.y.set(f"{clamped_value:.3f}")
+        self.y.set(clamped_value)
         self.previous_y_value = clamped_value # Update the stored valid value
         self.on_change_callback()
         return True
@@ -288,8 +284,13 @@ class AttenuationPoint:
         self._set_validated_y(self.y_entry.get())
 
     def change_x_or_y_value(self, axis, value):
-        """Called after clicking the +/- buttons."""
+        """Wywoływane po kliknięciu przycisków +/-."""
         if axis == 'x':
+            # Read the current value *before* attempting the change
+            # This is important if a previous set attempt failed
+            # but the variable may have been temporarily altered by text input.
+            # It’s safer to use the stored `previous_x_value` as the base.
+            # Although retrieving via self.x.get() should work after refactoring.
             current_value = float(self.x.get())  # Get the current value from the DoubleVar
             new_value = current_value + value
             self._set_validated_x(new_value)
@@ -302,7 +303,10 @@ class AttenuationPoint:
     def get_next_point_x(self):
         next_index = self.index + 1
         if next_index < len(self.editor.points):
-            return float(self.editor.points[next_index].x.get())
+            try:
+                 return float(self.editor.points[next_index].x.get())
+            except (ValueError, ctk.TclError):
+                 return None 
         return None
 
     def get_prev_point_x(self):
@@ -328,63 +332,12 @@ class AttenuationPoint:
         self.Y_increase_button_large.destroy()
         self.Y_increase_button_small.destroy()
 
-    
-    
-    def grid_forget(self):
-        """
-        Hide all of this point’s widgets, but only if they’re currently managed by grid.
-        Safely ignores any widgets that have been destroyed.
-        """
-        widgets = [
-            self.att_type_combo,
-            self.X_decrease_button_large.label,
-            self.X_decrease_button_small.label,
-            self.X_increase_button_small.label,
-            self.X_increase_button_large.label,
-            self.Y_decrease_button_large.label,
-            self.Y_decrease_button_small.label,
-            self.Y_increase_button_small.label,
-            self.Y_increase_button_large.label,
-            self.x_entry,
-            self.y_entry,
-            self.delete_button
-        ]
-        for w in widgets:
-            try:
-                if w.winfo_manager() == 'grid':
-                    w.grid_forget()
-            except Exception:
-                # widget may have been destroyed or never gridded
-                continue
-
-
-    def regrid_row(self, row: int):
-        # first hide the current ones:
-        self.grid_forget()
-        # now arrange them in the new row:
-        self.att_type_combo.grid(row=row, column=0, sticky="w", padx=5, pady=5)
-        self.X_decrease_button_large .grid(row=row, column=1, sticky="e", padx=5, pady=5)
-        self.X_decrease_button_small.grid(row=row, column=2, sticky="e", padx=5, pady=5)
-        self.x_entry.grid(row=row, column=3, sticky="ew",   padx=5, pady=5)
-        self.X_increase_button_small.grid(row=row, column=4, sticky="w", padx=5, pady=5)
-        self.X_increase_button_large.grid(row=row, column=5, sticky="w", padx=5, pady=5)
-        self.Y_decrease_button_large .grid(row=row, column=7, sticky="e", padx=5, pady=5)
-        self.Y_decrease_button_small .grid(row=row, column=8, sticky="e", padx=5, pady=5)
-        self.y_entry.grid(row=row, column=9, sticky="ew",   padx=5, pady=5)
-        self.Y_increase_button_small.grid(row=row, column=10,sticky="w", padx=5, pady=5)
-        self.Y_increase_button_large.grid(row=row, column=12,sticky="w", padx=5, pady=5)
-        self.delete_button.grid(row=row, column=13,sticky="e", padx=5, pady=5)
 
 # Curve Editor class
 class AttenuationCurveEditor:
     def __init__(self, master):
         self.master = master
-        self.MAX_ROWS = 20
-        self.row_pool: list[AttenuationPoint] = []
-        self.active_points: list[AttenuationPoint] = []
-        self.points = self.active_points
-        # alias for compatibility:
-        self.active_points = self.active_points
+        self.points = []
         self.max_x_values = {}
         self.selected_att = ""
         self.project_name = ""
@@ -406,8 +359,8 @@ class AttenuationCurveEditor:
         
         self.get_attenuation_X_label = ctk.CTkLabel(self.master, text="X %")
         self.get_attenuation_Y_label = ctk.CTkLabel(self.master, text="Y")
-        self.add_point_button = ctk.CTkButton(self.master, text="Add Point", command=self.add_point,
-                                              fg_color="#404040", hover_color="#303030")
+        # self.add_point_button = ctk.CTkButton(self.master, text="Add Point", command=self.add_point,
+        #                                       fg_color="#404040", hover_color="#303030")
         self.set_attenuation_button = ctk.CTkButton(self.master, text="Set Attenuation!", command=self.set_attenuation,
                                                     fg_color="#404040", hover_color="#303030")
         self.get_attenuation_button = ctk.CTkButton(self.master, text="Get Attenuation!", command=self.get_attenuation,
@@ -415,19 +368,9 @@ class AttenuationCurveEditor:
         self.get_attenuation_button.grid(row=0, column=0, pady=5, padx=12, sticky="w")
         
         # scrollable frame for points - height set to fit 6 rows
-        self.active_points_frame = ctk.CTkScrollableFrame(self.master, width=670, height=180)
-        self.active_points_frame.grid(row=2, column=0, columnspan=15, sticky="nsew")
-        for i in range(self.MAX_ROWS):
-            pt = AttenuationPoint(
-                self.active_points_frame, self,
-                x=0, y=0,
-                on_delete=lambda idx=i: self.delete_point(idx),
-                index=i,
-                on_change=self.update_graph
-            )
-            pt.grid_forget()            # hide immediately
-            self.row_pool.append(pt)
-            
+        self.points_frame = ctk.CTkScrollableFrame(self.master, width=670, height=180)
+        self.points_frame.grid(row=2, column=0, columnspan=15, sticky="nsew")
+        
         self.fig, self.ax = plt.subplots(figsize=(5, 2))
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.master)
         self.widget = self.canvas.get_tk_widget()
@@ -469,22 +412,22 @@ class AttenuationCurveEditor:
     def show_controls(self):
         self.get_attenuation_X_label.grid(row=1, column=3, pady=5)
         self.get_attenuation_Y_label.grid(row=1, column=11, pady=5)
-        self.add_point_button.grid(row=1, column=14, pady=5, padx=21, sticky="e")
+        #self.add_point_button.grid(row=1, column=14, pady=5, padx=21, sticky="e")
         self.set_attenuation_button.grid(row=0, column=14, pady=5, padx=21, sticky="e")
 
     def hide_controls(self):
         self.get_attenuation_X_label.grid_forget()
         self.get_attenuation_Y_label.grid_forget()
-        self.add_point_button.grid_forget()
+        #self.add_point_button.grid_forget()
         self.set_attenuation_button.grid_forget()
 
     def sort_points(self):
-        self.active_points.sort(key=lambda point: float(point.x.get()))
-        for i, point in enumerate(self.active_points):
+        self.points.sort(key=lambda point: float(point.x.get()))
+        for i, point in enumerate(self.points):
             point.index = i
             self.regrid_point(point, i)
 
-            is_endpoint = (i == 0 or i == len(self.active_points) - 1)
+            is_endpoint = (i == 0 or i == len(self.points) - 1)
 
             # Delete - hidden only on endpoints
             if is_endpoint:
@@ -533,42 +476,34 @@ class AttenuationCurveEditor:
         point.Y_increase_button_large.grid(row=row, column=12, sticky="w", padx=5, pady=5)
         point.delete_button.grid(row=row, column=13, sticky="e", padx=5, pady=5)
 
-    def add_point(self):
-        if len(self.active_points) > 1:
-            prev = self.active_points[-2]
-            last = self.active_points[-1]
-            x_mid = (float(prev.x.get()) + float(last.x.get())) / 2
-            y_mid = float(prev.y.get())
-            self._create_point(x_mid, y_mid, display_to_shape[prev.att_curve_string.get()])
-            self.sort_points()
-            self.update_graph()
-        else:
-            self._create_point(50, 0)
-            self.sort_points()
-            self.update_graph()
+    # def add_point(self):
+    #     if len(self.points) > 1:
+    #         first_point = self.points[0]
+    #         last_point = self.points[-2]
+    #         middle_x = float(first_point.x.get()) + float(last_point.x.get()) + 1
+    #         middle_y = float(last_point.y.get())
+    #         self._create_point(middle_x, middle_y)
+    #     else:
+    #         self._create_point(50, 0)
 
-    def _create_point(self, x: float, y: float, shape_key: str = "Linear") -> AttenuationPoint:
-        idx = len(self.active_points)
-        if idx >= self.MAX_ROWS:
-            return None  # too many points
-        
-        pt = self.row_pool[idx]
-        pt.x.set(f"{x:.3f}")
-        pt.y.set(f"{y:.3f}")
-        pt.previous_x_value = x
-        pt.previous_y_value = y
-        pt.att_curve_string.set(shape_display_map.get(shape_key, shape_display_map["Linear"]))
-        pt.regrid_row(idx)
-        self.active_points.append(pt)
-        return pt
-
+    def _create_point(self, x, y):
+        index = len(self.points)
+        #self.points_frame as the container for new points
+        point = AttenuationPoint(self.points_frame, self, x, y, self.delete_point, index, self.update_graph)
+        self.points.append(point)
+        self.sort_points()
+        self.update_graph()
+        return point
 
     def delete_point(self, index):
-        # don’t remove the first or last point
-        if index == 0 or index == len(self.active_points)-1:
+        #Prevent deletion of endpoints
+        if index == 0 or index == len(self.points) - 1:
             return
-        pt = self.active_points.pop(index)
-        pt.grid_forget()
+
+        #Delete the point
+        self.points[index].destroy()
+        del self.points[index]
+
         self.sort_points()
         self.update_graph()
         
@@ -591,7 +526,7 @@ class AttenuationCurveEditor:
 
     def update_graph(self, event=None):
         
-        if not self.active_points or self.graph_display_status in ('no_points', 'no_att_selected'):
+        if not self.points or self.graph_display_status in ('no_points', 'no_att_selected'):
             self.ax.cla()
             
             self.ax.text(
@@ -613,10 +548,11 @@ class AttenuationCurveEditor:
         max_x = getattr(self, 'current_max_x', 100)
         x_vals = []
         y_vals = []
-        shapes = [ display_to_shape[pt.att_curve_string.get()] for pt in self.active_points ]
-        for point in self.active_points:
+        shapes = [ display_to_shape[pt.att_curve_string.get()] for pt in self.points ]
+        for point in self.points:
             x_vals.append(float(point.x.get()) * max_x / 100)
             y_vals.append(float(point.y.get()))
+            shapes.append(point.att_curve_string.get())
         self.ax.cla()
 
         selected_display = self.att_var_string.get()
@@ -715,7 +651,7 @@ class AttenuationCurveEditor:
                 
                 # Prepare the list of points
                 points_payload = []
-                for point in self.active_points:
+                for point in self.points:
                     # Rescale X from [0–100] to [0–max_x]
                     real_x = float(point.x.get()) * max_x / 100
                     real_y = float(point.y.get())
@@ -753,27 +689,12 @@ class AttenuationCurveEditor:
             first_object_id = first_object['id']
             first_object_name = first_object.get('name', 'Unknown')
             self.selected_att = first_object_name
-            for pt in self.active_points:
-                pt.grid_forget()
-            self.active_points.clear()
+            for point in self.points[:]:
+                point.destroy()
+            self.points.clear()
             get_args = {"object": first_object_id, "curveType": attenuation_map[self.att_var_string.get()]}
             get_att = self.client.call("ak.wwise.core.object.getAttenuationCurve", get_args)
             points = get_att.get('points', [])
-            
-            if len(points) > self.MAX_ROWS:
-                mb.showwarning(
-                    "Too many points",
-                    f"Curve has {len(points)} points, but the maximum supported is {self.MAX_ROWS}."
-                )
-                # clear existing points and remove controlts
-                for pt in self.active_points:
-                    pt.grid_forget()
-                self.active_points.clear()
-                self.hide_controls()
-                self.graph_display_status = 'no_points'
-                self.update_graph()
-                return
-            
             if points:
                 max_x_value = max(p['x'] for p in points)
                 self.current_max_x = max_x_value
