@@ -221,7 +221,7 @@ class AttenuationPoint:
         clamped_value = max(0.0, min(100.0, new_value_float))
 
        
-        # Collision check beetwen nearest points  
+        # Collision check between nearest points
         next_point_x = self.get_next_point_x()
         prev_point_x = self.get_prev_point_x()
 
@@ -291,11 +291,11 @@ class AttenuationPoint:
         if axis == 'x':
             current = float(self.x.get())
             new = current + value
-            # pobieramy granice od sąsiadów
+            # get boundaries from neighboring points
             prev = self.get_prev_point_x() or 0.0
             nxt  = self.get_next_point_x() or 100.0
-            # jeśli nowe x wychodzi poza sąsiadów — ignorujemy naciśnięcie
-            #
+            # if new x is outside neighboring points — ignore the button press
+
             if new <= prev or new >= nxt:
                 return
             self._set_validated_x(new)
@@ -390,7 +390,7 @@ class AttenuationCurveEditor:
         self.active_points: list[AttenuationPoint] = []
         self.points = self.active_points
         # alias for compatibility:
-        self.active_points = self.active_points
+        self.active_points
         self.max_x_values = {}
         self.selected_att = ""
         self.project_name = ""
@@ -489,10 +489,10 @@ class AttenuationCurveEditor:
         n = len(self.active_points)
         for i, pt in enumerate(self.active_points):
             pt.index = i
-            # 1) Przeładuj layout (jak dotychczas)
+
             pt.regrid_row(i)
 
-            # 2) Delete button jak zwykle:
+            # delet button hidden on enpoints
             if i == 0 or i == n-1:
                 pt.delete_button.grid_forget()
             else:
