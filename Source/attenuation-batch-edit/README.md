@@ -6,7 +6,8 @@
 
 ## 📋 Interface Guide
 
-![image](https://github.com/user-attachments/assets/2532aebb-b2b3-4736-9884-49254e654ff2)
+![image](https://github.com/user-attachments/assets/59f4fae9-a621-40db-8464-0f614444f5d0)
+
 
 ### 1. Get Attenuation!
 
@@ -31,24 +32,21 @@ Each row represents a control point with columns:
 
 > **Tip:** Large ± buttons adjust by 10 units; small ± adjust by 1 unit.
 
-### 5. Add Point
 
-* Inserts a new point.
-
-### 6. Curve Type Selectors (per point)
+### 5. Curve Type Selectors (per point)
 
 * Combo box in each row to choose the shape of each curve segment: Linear, Logarithmic, S-Curve, Exponential, etc.
 
-### 7. Delete Point Buttons
+### 6. Delete Point Buttons
 
 * “Delete” button for each non-endpoint point/row.
 * Endpoints (0% & 100%) cannot be removed.
 
-### 8. Curve Preview Plot
+### 7. Curve Preview Plot
 
 * Live  plot of the attenuation curve.
 
-### 9. Project Name / Connection Status
+### 8. Project Name / Connection Status
 
 * Displays the connected Wwise project name.
 
