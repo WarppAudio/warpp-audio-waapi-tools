@@ -39,7 +39,7 @@ class SettingsManager:
         def get_resource_path(filename):
             # Running  „frozen” (.exe)
             if getattr(sys, 'frozen', False):
-                base_path = os.path.dirname(sys.executable)  # folder z .exe
+                base_path = os.path.dirname(sys.executable)
             else:
                 # Running as  .py
                 base_path = os.path.dirname(os.path.realpath(__file__))
@@ -119,95 +119,81 @@ class SettingsManager:
 settings_manager = SettingsManager()
 
 
-def format_event_name(name, prefix, settings_manager):
+def format_event_name(name: str, prefix: str, settings_manager, parent_workunit: str = None) -> str:
+    """
+    Format the event name by applying a prefix, handling wildcards, and adjusting letter casing.
+    Wildcard $parent in prefix will be replaced by parent_workunit if provided.
+    """
+    # Handle $parent wildcard in the prefix
+    if parent_workunit and '$parent' in prefix:
+        prefix = prefix.replace('$parent', parent_workunit)
 
-    # Formats the event name according to various settings:
-    #  - Replaces spaces and dashes with underscores
-    #  - Removes extra underscores
-    #  - Splits the name into words separated by underscores
-    #  - Skips capitalization or lowercasing for certain words:
-    #    + Direct match in the 'words_not_capital' list
-    #    + Matches any regex pattern created from 'words_not_capital' items containing '#'
-    #      (for example, "SFX#" -> regex ^SFX\d+$)
-    #  - Applies uppercase or lowercase if specified in settings
-    #  - Finally, adds a prefix and returns the resulting string
-
+    # Normalize separators
+    prefix = re.sub(r'[\s,]+', '_', prefix).strip('_')
+    prefix = re.sub(r'__+', '_', prefix)
 
     # Retrieve settings
     words_not_capital = settings_manager.get('WORDS_NOT_CAPITALIZE', [])
     letter_case_event_name = settings_manager.get('LETTER_CASE_EVENT_NAME', None)
     loop_naming = settings_manager.get('NAMING_FOR_LOOPS', '')
 
-    # Prepare two lists:
-    # 1) direct_words: items from 'words_not_capital' that do not contain '#'
-    # 2) regex_words: items that do contain '#'; we convert them into regex patterns
+    # Prepare patterns for words to skip capitalization
     direct_words = []
     regex_words = []
-
     for item in words_not_capital:
         item_strip = item.strip()
         if '#' in item_strip:
-            # Replace '#' with \d+ to match any sequence of digits
-            # For example: "SFX#" -> '^SFX\d+$'
+
             pattern = '^' + item_strip.replace('#', r'\d+') + '$'
             try:
-                # Compile the regex pattern
-                compiled = re.compile(pattern)
-                regex_words.append(compiled)
-            except Exception:
-                # If the pattern is invalid, skip it or log an error
+                regex_words.append(re.compile(pattern))
+            except re.error:
                 continue
         else:
             direct_words.append(item_strip)
 
-    # Replace spaces and dashes with underscores and remove consecutive underscores
-    name = name.replace(' ', '_').replace('-', '_')
-    name = re.sub(r'__+', '_', name)
+    # Replace spaces and dashes
+    base_name = name.replace(' ', '_').replace('-', '_')
+    base_name = re.sub(r'__+', '_', base_name)
 
-    # Split the name on underscores
-    words = name.strip('_').split('_')
-
+    # Split base name into words
+    words = base_name.strip('_').split('_')
     formatted_words = []
-    for word in words:
-        word_stripped = word.strip()
 
-        # Determine if this word should skip any capitalization/lowercase modifications
+    for word in words:
         skip_capitalization = False
 
-        # Condition 1: The word is in direct_words
-        # Condition 2: The word matches loop_naming (existing logic)
-        if word_stripped in direct_words or word_stripped in loop_naming:
+        # Check if word matches direct or regex skip lists
+        if word in direct_words or word == loop_naming:
             skip_capitalization = True
         else:
-            # Check each compiled regex from regex_words
             for rgx in regex_words:
-                if rgx.match(word_stripped):
+                if rgx.match(word):
                     skip_capitalization = True
                     break
 
-        # If skip_capitalization is True, we keep the word exactly as is
+        # Apply casing or keep as-is
         if skip_capitalization:
-            formatted_words.append(word_stripped)
+            formatted_words.append(word)
         else:
-            # Otherwise, apply uppercase or lowercase rules if configured
             if letter_case_event_name == 'upper':
-                formatted_words.append(word_stripped.capitalize())
+                formatted_words.append(word.capitalize())
             elif letter_case_event_name == 'lower':
-                formatted_words.append(word_stripped.lower())
+                formatted_words.append(word.lower())
             else:
-                # If None, leave the word as-is
-                formatted_words.append(word_stripped)
+                formatted_words.append(word)
 
-    # Rebuild the name with underscores
-    formatted_name = '_'.join(formatted_words)
+    # Join formatted words with underscores
+    formatted_base = '_'.join(formatted_words)
 
+    # Ensure prefix ends with underscore if not empty
     if prefix and not prefix.endswith('_'):
-        prefix = prefix + '_'
+        prefix += '_'
 
-    # Prefix the name and remove any trailing underscores
-    formatted_name = f"{prefix}{formatted_name}".strip('_')
+    # Combine prefix and formatted base, remove any trailing underscores
+    full_name = f"{prefix}{formatted_base}".strip('_')
+    return full_name
 
-    return formatted_name
 
 
 
@@ -238,9 +224,6 @@ def check_if_is_loop_sound(sound_name: str, tokens: list[str]) -> bool:
         # Escape user-defined token in case it contains special regex characters
         token_escaped = re.escape(token.strip())
 
-        # Build the pattern allowing ^ (start), _ (underscore), or - (dash) on the left,
-        # and _ (underscore), - (dash), or $ (end) on the right.
-        # We do NOT use re.IGNORECASE, so it is case sensitive.
         pattern = re.compile(r'(?:^|_|-)' + token_escaped + r'(?:_|-|$)')
 
         # If the pattern matches anywhere in the sound_name, return True immediately
@@ -248,26 +231,39 @@ def check_if_is_loop_sound(sound_name: str, tokens: list[str]) -> bool:
             return True
     return False
 
-def create_event_play(name, target, client, is_loop=False):
+def create_event_play(name: str,
+                      target,
+                      client,
+                      is_loop: bool = False,
+                      parent_workunit: str = None) -> dict:
+    """
+    Create a Play event object. If $parent wildcard was used,
+    parent_workunit is already applied in the prefix.
+    """
+    # Retrieve user-defined naming prefix for Play events
     play_naming = settings_manager.get("PLAY_NAMING_CONVENTION", "")
-    event_name = format_event_name(name, play_naming, settings_manager)
+    # Format final event name with optional wildcard replacement
+    event_name = format_event_name(name, play_naming, settings_manager, parent_workunit)
+    # Fade time for looped sounds
     play_loop_fade_time = settings_manager.get("PLAY_LOOP_FADE_TIME", 0.0)
 
+    # Skip creation if event already exists
     if event_exists(event_name, client):
         print(f"[SKIP] Event '{event_name}' already exists in project, skipping.")
         return None
 
-    # prepar play action
+    # Build the Play action
     action = {
         "type": "Action",
         "@ActionType": 1,
         "name": "Start",
         "@Target": target
     }
-    # if it's loot set fade time
+    # Apply fade time on loops
     if is_loop:
         action["@FadeTime"] = play_loop_fade_time
 
+    # Construct and return the event payload
     event = {
         "type": "Event",
         "name": event_name,
@@ -279,35 +275,44 @@ def create_event_play(name, target, client, is_loop=False):
 
 
 
-def create_event_stop(name, target, client):
+
+def create_event_stop(name, target, client, parent_workunit=None):
+    
+    """
+    Create a Stop event object. Supports $parent wildcard in prefix.
+    """
+
     stop_naming = settings_manager.get("STOP_NAMING_CONVENTION", "")
-    event_name = format_event_name(name, stop_naming, settings_manager)
+    event_name = format_event_name(name, stop_naming, settings_manager, parent_workunit)
     stop_loop_fade_time = settings_manager.get("STOP_LOOP_FADE_TIME", 0.0)
 
+    # Skip creation if event already exists
     if event_exists(event_name, client):
         print(f"[SKIP] Event '{event_name}' already exists in project, skipping.")
         return None
 
+    # Build the Stop action
+    action = {
+        "type": "Action",
+        "@ActionType": 2,
+        "@FadeTime": stop_loop_fade_time,
+        "name": "",
+        "@Target": target
+    }
+
+    # Construct and return the event payload
     event = {
         "type": "Event",
         "name": event_name,
-        "children": [
-            {
-                "type": "Action",
-                "@ActionType": 2,
-                "@FadeTime": stop_loop_fade_time,
-                "name": "",
-                "@Target": target
-            },
-        ]
+        "children": [action]
     }
     return event
 
 
 
-def create_event_seek(name, target, client):
+def create_event_seek(name, target, client, parent_workunit=None):
     play_naming = settings_manager.get("PLAY_NAMING_CONVENTION", "")
-    event_name = format_event_name(name, play_naming, settings_manager)
+    event_name = format_event_name(name, play_naming, settings_manager, parent_workunit)
     play_loop_fade_time = settings_manager.get("PLAY_LOOP_FADE_TIME", 0.0)
     seek_percent = settings_manager.get("SEEK_Percent", 0.0)
 
@@ -379,171 +384,111 @@ def create_new_folder(parent_path, new_folder_name):
 
     update_events_listbox(display_text, created_id)
 
-def create_play_or_seek_event(path_obj, target_id, is_loop, client):
-    seek_event_for_loops = settings_manager.get('SEEK_ACTION_FOR_LOOPS', False)
-    if is_loop and seek_event_for_loops:
-        # 'Seek' event creation
-        return create_event_seek(str(path_obj.stem), target_id, client)
+def create_play_or_seek_event(name: str,
+                               target,
+                               is_loop: bool,
+                               client,
+                               parent_workunit: str = None) -> dict:
+
+    # Check user setting for generating Seek actions on loops
+    seek_for_loops = settings_manager.get('SEEK_ACTION_FOR_LOOPS', False)
+    if is_loop and seek_for_loops:
+        # Note: create_event_seek signature may need to accept parent_workunit
+        return create_event_seek(name, target, client, parent_workunit)
     else:
-        # "Play" event creation, and pass is_loop info
-        return create_event_play(str(path_obj.stem), target_id, client, is_loop)
+        return create_event_play(name, target, client, is_loop, parent_workunit)
 
 
 
 
 
 def create_events_for_selection(wwu_path, new_wwu):
-    """
-    Creates events (Play/Seek + optional Stop) based on the current Wwise selection.
-    Places them inside the specified wwu_path + new_wwu, ignoring the original path location.
-    """
     global client
     try:
-        
-            # Retrieve currently selected Wwise objects
-        options = {
-            "return": [
-                "path",
-                "id",
-                "isPlayable",
-                "originalWavFilePath",
-                "parent.id",
-                "ChannelConfigOverride",
-                "name",
-            ]
-        }
-        selected_objs = client.call(
-            "ak.wwise.ui.getSelectedObjects", {}, options=options
-        )["objects"]
+        options = {"return": ["id", "isPlayable", "name", "originalWavFilePath", "ChannelConfigOverride"]}
+        selected = client.call("ak.wwise.ui.getSelectedObjects", {}, options=options)["objects"]
 
-        # We'll collect event dictionaries in set_args["objects"]
-        set_args = {
-            "objects": [],
-            "onNameConflict": "merge",
-        }
+        set_args = {"objects": [], "onNameConflict": "merge"}
+        created = []
+        seeks = []
+        incorrect = []
 
-        newly_created_event_names = []
-        incorrect_sources = []
+        words_remove = settings_manager.get("WORDS_REMOVE", [])
+        loop_tokens = settings_manager.get("SOUND_NAMING_FOR_LOOPS", [])
+        naming_conv = settings_manager.get("NAMING_CONVENTION", [])
+        loop_suffix = settings_manager.get("NAMING_FOR_LOOPS", "")
+        stop_loops = settings_manager.get("STOP_EVENT_FOR_LOOPS", False)
+        seek_loops = settings_manager.get("SEEK_ACTION_FOR_LOOPS", False)
+        seek_min = settings_manager.get("SEEK_RANDOM_MIN", 0.0)
+        seek_max = settings_manager.get("SEEK_RANDOM_MAX", 0.0)
 
-        # get actual info
-        words_remove = settings_manager.get('WORDS_REMOVE', [])
-        loop_sound_naming = settings_manager.get('SOUND_NAMING_FOR_LOOPS', [])
-        naming_convention = settings_manager.get('NAMING_CONVENTION', [])
-        loop_naming = settings_manager.get('NAMING_FOR_LOOPS', '')
-        stop_event_for_loops = settings_manager.get('STOP_EVENT_FOR_LOOPS', False)
-        seek_random_min = settings_manager.get("SEEK_RANDOM_MIN", 0.0)
-        seek_random_max = settings_manager.get("SEEK_RANDOM_MAX", 0.0)
+        parent = new_wwu or wwu_path.strip("\\").split("\\")[-1]
 
-        for obj in selected_objs:
-            # Skip anything that's not playable
-            if not obj["isPlayable"]:
+        for obj in selected:
+            if not obj.get("isPlayable"):
                 continue
 
-            original_name = obj["name"]
-
-            # Remove words from the name (words_remove)
-            cleaned_name = original_name
+            name = obj["name"]
             for w in words_remove:
-                cleaned_name = cleaned_name.replace(w, "")
-            cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
+                name = name.replace(w, "")
+            name = re.sub(r"_+", "_", name).strip("_")
 
-            # Check if the name indicates a loop 
-            # (we look for items in loop_sound_naming)
-            is_loop = check_if_is_loop_sound(cleaned_name, loop_sound_naming)
-
+            is_loop = check_if_is_loop_sound(name, loop_tokens)
             if is_loop:
-                # remove tokens from the name
-                for token in loop_sound_naming:
-                    cleaned_name = cleaned_name.replace(token, "")
-                cleaned_name = re.sub(r"_+", "_", cleaned_name).strip("_")
-                
-                # Also remove the existing loop_naming if present, then reappend it
-                cleaned_name = cleaned_name.replace(loop_naming, "").strip("_")
-                cleaned_name = f"{cleaned_name}_{loop_naming}".strip("_")
+                for t in loop_tokens:
+                    name = name.replace(t, "")
+                name = re.sub(r"_+", "_", name).strip("_")
+                name = name.replace(loop_suffix, "").strip("_")
+                name = f"{name}_{loop_suffix}".strip("_")
 
-            # Build children events (Play/Seek + optional Stop)
             children = []
+            evt = create_play_or_seek_event(name, obj["id"], is_loop, client, parent)
+            if evt:
+                children.append(evt)
+                created.append(evt["name"])
+                if is_loop and seek_loops:
+                    seeks.append(evt["name"])
 
-            play_event = create_play_or_seek_event(Path(cleaned_name), obj["id"], is_loop, client)
-            if play_event:
-                children.append(play_event)
-                newly_created_event_names.append(play_event["name"])
-
-            # Optionally create a Stop event for loops if setting is enabled
-            if is_loop and stop_event_for_loops:
-                stop_evt = create_event_stop(cleaned_name, obj["id"], client)
+            if is_loop and stop_loops:
+                stop_evt = create_event_stop(name, obj["id"], client, parent)
                 if stop_evt:
                     children.append(stop_evt)
-                    newly_created_event_names.append(stop_evt["name"])
+                    created.append(stop_evt["name"])
 
-            # Attach these events to the chosen WorkUnit/folder
-            set_args["objects"].append({
-                "object": wwu_path + "\\" + new_wwu,
-                "children": children,
-            })
+            target = f"{wwu_path}\\{new_wwu}" if new_wwu else wwu_path
+            set_args["objects"].append({"object": target, "children": children})
 
-            # Check if the AudioFileSource naming matches the naming_convention
-            audio_source_query = {
-                "waql": f'$ "{obj["id"]}" select this, descendants where type = "AudioFileSource"'
-            }
-            sources = client.call("ak.wwise.core.object.get", audio_source_query, options=options)
-            for source_item in sources["return"]:
-                source_name = source_item["name"]
-                if not any(conv in source_name for conv in naming_convention):
-                    incorrect_sources.append(source_name)
+            src_q = {"waql": f'$ "{obj["id"]}" select this, descendants where type = "AudioFileSource"'}
+            for src in client.call("ak.wwise.core.object.get", src_q, options=options)["return"]:
+                if not any(p in src["name"] for p in naming_conv):
+                    incorrect.append(src["name"])
 
-
-        # Actually create these objects in Wwise
         client.call("ak.wwise.core.object.set", set_args)
 
-        # Retrieve the newly created event IDs and update the listbox
-        for e_name in newly_created_event_names:
-            event_query = {
-                "waql": f'$ from type Event where name = "{e_name}"'
-            }
-            get_options = {"return": ["id", "name", "path"]}
-            res = client.call("ak.wwise.core.object.get", event_query, options=get_options)
-
-            found = res.get("return", [])
-            if not found:
-                continue
-
-            wwise_id = found[0]["id"]
-            display_text = f"{e_name} [E]"
-            update_events_listbox(display_text, wwise_id)
-
-        # Handle randomization for any Seek events that were created
-        for event_name in created_event_seek_names:
-            seek_query = {
-                "waql": f'$ from object "Event:{event_name}" select children where actiontype = 36'
-            }
-            seek_actions = client.call("ak.wwise.core.object.get", seek_query, options=options)
-            for seek_item in seek_actions["return"]:
-                action_id = seek_item.get("id")
-                random_args = {
-                    "object": str(action_id),
+        for seek_name in seeks:
+            q = {"waql": f'$ from type Action where actionType = 36 and parent.name = "{seek_name}"'}
+            acts = client.call("ak.wwise.core.object.get", q, options={"return": ["id"]})["return"]
+            for a in acts:
+                client.call("ak.wwise.core.object.setRandomizer", {
+                    "object": str(a["id"]),
                     "enabled": True,
                     "property": "SeekPercent",
-                    "min": seek_random_min,
-                    "max": seek_random_max,
-                }
-                client.call("ak.wwise.core.object.setRandomizer", random_args)
+                    "min": seek_min,
+                    "max": seek_max,
+                })
 
-        # If there are any sources that do not match the naming convention, show error
-        if incorrect_sources and len(naming_convention) > 0:
-            root = tk.Tk()
-            root.withdraw()
-            incorrect_sources_message = "\n".join(incorrect_sources)
-            messagebox.showerror(
-                "Error",
-                f"Incorrect naming convention. The .wav file name should contain {naming_convention}.\n"
-                f"Incorrect source names:\n{incorrect_sources_message}",
-            )
+        for name in created:
+            q = {"waql": f'$ from type Event where name = "{name}"'}
+            res = client.call("ak.wwise.core.object.get", q, options={"return": ["id"]})
+            if res.get("return"):
+                update_events_listbox(f"{name} [E]", res["return"][0]["id"])
+
+        if incorrect and naming_conv:
+            messagebox.showerror("Naming Convention Error", "\n".join(incorrect))
 
     except Exception as e:
         traceback.print_exc()
-        print(str(e))
-
+        messagebox.showerror("Error", str(e))
 
 
 
@@ -552,22 +497,19 @@ def get_workunit_path():
     # Define the options for the query
     options = {"return": ["path", "id", "isPlayable", "originalWavFilePath", "parent.id", "ChannelConfigOverride", "name", "type"]}
 
-    # Query for workunits
     wwu_query = {
         'waql': '$ from type workunit where category = "Events"',
     }
     wwu_result = client.call("ak.wwise.core.object.get", wwu_query, options=options)
 
-    # Query for folders
     folder_query = {
         'waql': '$ from type folder where category = "Events"',
     }
     folder_result = client.call("ak.wwise.core.object.get", folder_query, options=options)
 
-    # Combine the results
     combined_results = wwu_result.get('return', []) + folder_result.get('return', [])
 
-    # Extract paths
+
     paths = [item['path'] for item in combined_results]
     return paths
 
@@ -618,9 +560,6 @@ def get_folder_names():
     names = list(map(lambda x: x['name'], result))
     paths = list(map(lambda x: x['path'], result))
     return names
-
-
-
 
 
 def get_all_workunits():
@@ -681,12 +620,12 @@ def can_create_workunit(new_name, parent_path):
     all_wwu = get_all_workunits()
     all_fld = get_all_folders()
 
-    # (1) Check name uniqueness across the entire project (WorkUnits)
+
     for wwu_name, wwu_path in all_wwu:
         if wwu_name.lower() == new_name.lower():
-            return False  # A WorkUnit with the same name already exists
+            return False  
 
-    # (2) Check if there's no Folder with the same name in the same parent_path
+
     for fld_name, fld_path in all_fld:
         if fld_name.lower() == new_name.lower():
             if get_parent_path(fld_path) == parent_path:
@@ -728,7 +667,6 @@ def handle_create_events():
     workunit_path = paths_var_string.get()
     new_parent_name = entry_str_new_parent.get().strip()
 
-    # 1. Attempt to create a Folder
     if show_entry_new_folder_var.get() == 1 and new_parent_name:
         if not can_create_folder(new_parent_name, workunit_path):
             messagebox.showinfo(
@@ -739,7 +677,6 @@ def handle_create_events():
         else:
             create_new_folder(workunit_path, new_parent_name)
 
-    # 2. Attempt to create a WorkUnit
     if show_entry_new_wwu_var.get() == 1 and new_parent_name:
         if not can_create_workunit(new_parent_name, workunit_path):
             messagebox.showinfo("Work Unit Name Conflict", f"Work Unit: {new_parent_name}, already exists")
@@ -747,9 +684,6 @@ def handle_create_events():
         else:
             create_new_workunit(workunit_path, new_parent_name)
 
-    # 3. If we got here, it means:
-    #    - user did not check anything to create
-    #    - or we successfully created a Folder/WorkUnit without conflicts
     try:
         refresh_workunit_list()
         create_events_for_selection(workunit_path, new_parent_name)
@@ -815,7 +749,7 @@ def update_loop_sound_naming(*args):
         sound_naming = [word.strip() for word in value.split(',') if word.strip()]
         settings_manager.set('SOUND_NAMING_FOR_LOOPS', sound_naming)
         
-        print(f"Updated SOUND_NAMING_FOR_LOOPS: {sound_naming}")  # Logowanie dla debugowania
+        print(f"Updated SOUND_NAMING_FOR_LOOPS: {sound_naming}") 
     except Exception as e:
         print(f"Error updating SOUND_NAMING_FOR_LOOPS: {e}")
 
@@ -861,7 +795,8 @@ def update_stop_loop_fade_time(*args):
 
 
 
-allowed_pattern = re.compile(r'^[A-Za-z0-9_]+$')
+allowed_pattern = re.compile(r'^[A-Za-z0-9_\$,\s]+$')
+
 
 
 def update_play_naming(*args):
@@ -1561,7 +1496,7 @@ created_items_label = ctk.CTkLabel(
 created_items_label.grid(row=0, column=0, columnspan=2, sticky='ewn')
 created_events_listbox.grid(row=1, column=0, sticky='nsew', columnspan=5)
 
-# We place listbox_evets_frame in column 2
+
 listbox_evets_frame.grid(row=2, column=2, sticky='nsew', padx=10)
 
 
@@ -1596,10 +1531,10 @@ trash_label = ctk.CTkLabel(
 )
 trash_label.grid(row=0, column=1, sticky='e', padx=(0, 5))
 
-# We add a click binding to the clearing function
+# click binding to the clearing function
 trash_label.bind("<Button-1>", clear_created_events_listbox)
 
-listbox_evets_frame.grid_columnconfigure(0, weight=1)  # Makes the listbox expand horizontally
+listbox_evets_frame.grid_columnconfigure(0, weight=1)  
 listbox_evets_frame.grid_rowconfigure(0, weight=1)
 
 
@@ -1611,7 +1546,6 @@ def update_events_listbox(display_text, object_id):
     if display_text not in created_events_listbox.get(0, tk.END):
         created_events_listbox.insert(tk.END, display_text)
 
-    # If you wanted to set label/scrollbar visibility here, etc., you can keep the existing logic, e.g.:
     if created_events_listbox.size() == 1:
         # Show label, etc.
         pass
@@ -1661,12 +1595,12 @@ def on_listbox_select(event):
     """
     widget = event.widget
 
-    # 1. If the event came from created_events_listbox
+
     if widget == created_events_listbox:
         selection_index = created_events_listbox.curselection()
         if selection_index:
             selected_display_text = created_events_listbox.get(selection_index[0])
-            # if the text exists in dictionary created_items_dict:
+
             if selected_display_text in created_items_dict:
                 wwise_id = created_items_dict[selected_display_text]
                 try:
@@ -1678,12 +1612,12 @@ def on_listbox_select(event):
                 except Exception as e:
                     print(f"Error in selecting object in Wwise: {e}")
 
-    # 2. If the event came from workunit_listbox
+
     elif widget == workunit_listbox:
         selection_index = workunit_listbox.curselection()
         if selection_index:
             selected_item = workunit_listbox.get(selection_index[0])
-            # Update the variable so user can see the path in entry or do other logic
+
             paths_var_string.set(selected_item)
 
 
