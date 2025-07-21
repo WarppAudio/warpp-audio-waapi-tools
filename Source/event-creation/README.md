@@ -124,11 +124,15 @@ Before using the tool, ensure that:
 
 - For example, "Play_" will be added to event names to follow a consistent naming convention.
 
+- Here you can add the **$parent** wildcard to automatically add the name of the current work unit or folder to each event name.
+
 9. **Stop Events Naming**
 
 - This field defines the prefix for "Stop" events.
 
 - For example, Stop_ will be added to event names related to stopping playback.
+
+- Here you can add the **$parent** wildcard to automatically add the name of the current work unit or folder to each event name.
 
 10. **Source Name**
 
