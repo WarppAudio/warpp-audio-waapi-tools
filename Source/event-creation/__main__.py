@@ -1652,7 +1652,8 @@ window.grid_columnconfigure(1, weight=1)
 
 def on_close():
     close_waapi_connection()  
-    window.destroy()        
+    window.destroy()
+    os._exit(0)        
 
 def main():
     global client
