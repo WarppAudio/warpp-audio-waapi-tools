@@ -1677,7 +1677,7 @@ def main():
         workunit_listbox.insert(tk.END, name)
 
     # tool version
-    version_label = ctk.CTkLabel(window, text="v1.0.0", text_color="#9f9f9f")
+    version_label = ctk.CTkLabel(window, text="v1.0.1", text_color="#9f9f9f")
     version_label.place(relx=1.0, rely=1.0, anchor='se', x=-10, y=-10)
     
     window.protocol("WM_DELETE_WINDOW", on_close)
