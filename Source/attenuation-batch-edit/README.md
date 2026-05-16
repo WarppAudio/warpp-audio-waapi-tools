@@ -64,4 +64,9 @@ Each row represents a control point with columns:
 
 ---
 
+## 🚧 Known Issues and Limitations
+
+* Dual-shelf filters are currently not supported.
+* When editing Spatial Audio curves, Wwise needs to be restarted for the curve visualization to update correctly.
+
 
